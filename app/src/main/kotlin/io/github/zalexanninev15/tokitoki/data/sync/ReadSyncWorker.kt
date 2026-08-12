@@ -46,11 +46,15 @@ class ReadSyncWorker(
         var sawTransientFailure = false
 
         for ((accountId, entries) in due.groupBy { it.accountLocalId }) {
-            val account = accountDao.byId(accountId) ?: run {
+            // `?: run { ...; continue }` would put `continue` inside an inline lambda,
+            // which Kotlin 2.0 still treats as an experimental feature.
+            val account = accountDao.byId(accountId)
+            if (account == null) {
                 queueDao.remove(entries.map { it.itemId })
                 continue
             }
-            val token = container.secureStore.token(accountId) ?: run {
+            val token = container.secureStore.token(accountId)
+            if (token == null) {
                 queueDao.remove(entries.map { it.itemId })
                 continue
             }

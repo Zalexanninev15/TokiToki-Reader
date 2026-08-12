@@ -10,6 +10,8 @@ import io.github.zalexanninev15.tokitoki.domain.model.SourceKind
 import io.github.zalexanninev15.tokitoki.domain.model.SpanKind
 import io.github.zalexanninev15.tokitoki.domain.model.TextSpan
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 @Serializable
@@ -37,6 +39,20 @@ private val json = Json { ignoreUnknownKeys = true }
  */
 fun FeedItem.toEntity(): FeedItemEntity {
     val body = displayed
+
+    // Bound to explicitly typed locals rather than inlined into encodeToString: with the
+    // map() call as a direct argument, overload resolution picks the two-parameter
+    // encodeToString(SerializationStrategy, value) before the element type is inferred.
+    val spanRecords: List<SpanRecord> = body.text.spans.map {
+        SpanRecord(it.start, it.end, it.kind.name, it.target)
+    }
+    val mediaRecords: List<MediaRecord> = body.media.map {
+        MediaRecord(
+            it.kind.name, it.url, it.previewUrl, it.description,
+            it.width, it.height, it.blurHash,
+        )
+    }
+
     return FeedItemEntity(
         id = id.value,
         accountLocalId = id.accountLocalId,
@@ -47,17 +63,8 @@ fun FeedItem.toEntity(): FeedItemEntity {
         authorAvatarUrl = body.author.avatarUrl,
         createdAt = createdAtEpochMillis,
         text = body.text.plain,
-        spansJson = json.encodeToString(
-            body.text.spans.map { SpanRecord(it.start, it.end, it.kind.name, it.target) },
-        ),
-        mediaJson = json.encodeToString(
-            body.media.map {
-                MediaRecord(
-                    it.kind.name, it.url, it.previewUrl, it.description,
-                    it.width, it.height, it.blurHash,
-                )
-            },
-        ),
+        spansJson = json.encodeToString(spanRecords),
+        mediaJson = json.encodeToString(mediaRecords),
         contentWarning = body.contentWarning,
         canonicalUrl = body.canonicalUrl,
         repostedByName = repostedBy?.displayName,
