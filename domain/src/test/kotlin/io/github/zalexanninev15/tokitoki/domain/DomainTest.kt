@@ -75,6 +75,19 @@ class TimelineCursorPolicyTest {
         assertFalse(TimelineCursorPolicy.isCoveredBy("101", "100"))
         assertFalse(TimelineCursorPolicy.isCoveredBy("101", null))
     }
+
+    @Test
+    fun `newest picks the furthest cursor and ignores nulls`() {
+        assertEquals("500", TimelineCursorPolicy.newest("100", null, "500", ""))
+        assertEquals("100", TimelineCursorPolicy.newest("100"))
+        assertNull(TimelineCursorPolicy.newest(null, null))
+        assertNull(TimelineCursorPolicy.newest())
+    }
+
+    @Test
+    fun `newest compares numerically not lexicographically`() {
+        assertEquals("100", TimelineCursorPolicy.newest("99", "100"))
+    }
 }
 
 class VisibilityReadTrackerTest {

@@ -36,8 +36,7 @@ class MastodonReadSynchronizer(
 
         return try {
             val serverCursor = fetchServerCursor()
-            val known = listOfNotNull(serverCursor, loadStoredCursor())
-                .maxWithOrNull(TimelineCursorPolicy.ID_ORDER)
+            val known = TimelineCursorPolicy.newest(serverCursor, loadStoredCursor())
 
             val target = TimelineCursorPolicy.advance(known, items.map { it.remoteId })
                 ?: return ReadSyncOutcome.Success // already covered; nothing to send

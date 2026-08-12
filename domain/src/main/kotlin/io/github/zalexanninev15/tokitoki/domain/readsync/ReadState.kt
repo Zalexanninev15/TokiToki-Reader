@@ -87,6 +87,17 @@ object TimelineCursorPolicy {
         return ID_ORDER.compare(candidate, cursor) <= 0
     }
 
+    /**
+     * The furthest-along of several cursors, ignoring nulls.
+     *
+     * Exists so callers in other modules can reconcile a stored cursor with the one the
+     * server reports without reaching for the comparator itself: `internal` is scoped to
+     * the Gradle module, so exposing the ordering as a helper keeps the comparison rules
+     * in one place instead of being reimplemented per data source.
+     */
+    fun newest(vararg candidates: String?): String? =
+        candidates.filterNotNull().filter { it.isNotEmpty() }.maxWithOrNull(ID_ORDER)
+
     internal val ID_ORDER: Comparator<String> = Comparator { a, b ->
         val aNum = a.all { it in '0'..'9' }
         val bNum = b.all { it in '0'..'9' }
