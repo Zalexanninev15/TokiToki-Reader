@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Original mark: a rounded speech bubble with two ears and a sparkle. Anime-adjacent
+     in silhouette, but drawn from scratch — no third-party character or logo. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <path
+        android:fillColor="#FFB4C7"
+        android:pathData="M34,30 L30,18 L44,25 Z" />
+    <path
+        android:fillColor="#FFB4C7"
+        android:pathData="M74,30 L78,18 L64,25 Z" />
+
+    <path
+        android:fillColor="#FFD9E4"
+        android:pathData="M34,28 L74,28 A16,16 0 0 1 90,44 L90,62 A16,16 0 0 1 74,78 L58,78 L46,90 L46,78 L34,78 A16,16 0 0 1 18,62 L18,44 A16,16 0 0 1 34,28 Z" />
+
+    <path
+        android:fillColor="#7B5CD6"
+        android:pathData="M32,46 L62,46 L62,52 L32,52 Z" />
+    <path
+        android:fillColor="#7B5CD6"
+        android:pathData="M32,58 L52,58 L52,64 L32,64 Z" />
+
+    <path
+        android:fillColor="#FFE9A8"
+        android:pathData="M76,50 L79,58 L87,61 L79,64 L76,72 L73,64 L65,61 L73,58 Z" />
+</vector>

@@ -16,6 +16,7 @@ dependencyResolutionManagement {
 
 rootProject.name = "tokitoki-reader"
 
+include(":app")
 include(":domain")
 include(":data:mastodon")
 include(":data:misskey")

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<data-extraction-rules>
+    <cloud-backup>
+        <!-- Tokens are encrypted with a Keystore key that cannot leave the device, so a
+             backup would only carry unreadable ciphertext. Excluded to be unambiguous. -->
+        <exclude domain="sharedpref" path="tokitoki_secure.xml" />
+        <exclude domain="database" path="tokitoki.db" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" path="tokitoki_secure.xml" />
+    </device-transfer>
+</data-extraction-rules>

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">TokiToki Reader</string>
+    <string name="tab_all">All</string>
+    <string name="tab_mastodon">Mastodon</string>
+    <string name="tab_misskey">Misskey</string>
+    <string name="feed_empty_title">Nothing here yet</string>
+    <string name="feed_empty_body">Connect an account to start reading.</string>
+    <string name="feed_error_title">Could not load the feed</string>
+    <string name="retry">Retry</string>
+    <string name="open_original">Open</string>
+    <string name="copy_link">Copy link</string>
+    <string name="link_copied">Link copied</string>
+    <string name="link_unavailable">This post has no public link</string>
+    <string name="show_content">Show content</string>
+    <string name="boosted_by">boosted by %1$s</string>
+    <string name="accounts">Accounts</string>
+    <string name="add_account">Add account</string>
+    <string name="connected">Connected</string>
+    <string name="log_out">Log out</string>
+    <string name="instance_url">Instance URL</string>
+    <string name="sign_in">Sign in</string>
+    <string name="choose_service">Choose a service</string>
+    <string name="auth_failed">Sign-in failed</string>
+    <string name="settings">Settings</string>
+    <string name="appearance">Appearance</string>
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="theme_amoled">AMOLED black</string>
+    <string name="dynamic_color">Dynamic color</string>
+    <string name="font_size">Font size</string>
+    <string name="font_small">Small</string>
+    <string name="font_normal">Normal</string>
+    <string name="font_large">Large</string>
+    <string name="font_extra_large">Extra large</string>
+    <string name="language">Language</string>
+    <string name="sources">Feeds</string>
+    <string name="read_sync">Read synchronisation</string>
+    <string name="read_sync_cursor">Timeline position is shared with your other clients</string>
+    <string name="read_sync_local">This server has no read state; stored on this device only</string>
+    <string name="cd_avatar">Avatar of %1$s</string>
+    <string name="cd_image">Attached image</string>
+    <string name="cd_close">Close</string>
+    <string name="cd_back">Back</string>
+    <string name="cd_more">More actions</string>
+</resources>
