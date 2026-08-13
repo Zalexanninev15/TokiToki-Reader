@@ -62,5 +62,17 @@
     <string name="image_save_failed">Не удалось сохранить изображение</string>
     <string name="follows_exported">Сохранено: %1$s</string>
     <string name="follows_export_failed">Не удалось сохранить файл</string>
-    <string name="misskey_hint">Misskey (а также Sharkey, Iceshrimp, CherryPick)</string>
+    <string name="misskey_hint">Также Sharkey, Iceshrimp, CherryPick и другие форки</string>
+    <string name="update_check">Проверить обновления</string>
+    <string name="update_up_to_date">Установлена последняя версия</string>
+    <string name="update_available">Доступна новая версия: %1$s</string>
+    <string name="update_open">Открыть страницу релиза</string>
+    <string name="update_failed">Не удалось проверить обновления</string>
+    <string name="misskey_title">Misskey (и Sharkey)</string>
+    <string name="mastodon_hint">Также Pleroma, Akkoma, GoToSocial</string>
+    <string name="instance_url_hint">Адрес инстанса, с https:// или без</string>
+    <string name="language_system">Системный</string>
+    <string name="language_en">Английский</string>
+    <string name="language_ru">Русский</string>
+    <string name="language_ja">Японский</string>
 </resources>

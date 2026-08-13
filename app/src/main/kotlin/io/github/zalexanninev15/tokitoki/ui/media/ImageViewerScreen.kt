@@ -4,6 +4,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -91,7 +95,14 @@ fun ImageViewerScreen(url: String, onClose: () -> Unit) {
                 ),
         )
 
-        Row(modifier = Modifier.align(Alignment.TopEnd).padding(12.dp)) {
+        Row(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                // Without this the buttons sit under the status bar and the notch,
+                // which on most phones puts them out of comfortable thumb reach.
+                .windowInsetsPadding(WindowInsets.systemBars)
+                .padding(12.dp),
+        ) {
             IconButton(
                 onClick = {
                     scope.launch {
@@ -109,6 +120,11 @@ fun ImageViewerScreen(url: String, onClose: () -> Unit) {
             }
         }
 
-        SnackbarHost(snackbar, modifier = Modifier.align(Alignment.BottomCenter))
+        SnackbarHost(
+            snackbar,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .windowInsetsPadding(WindowInsets.navigationBars),
+        )
     }
 }

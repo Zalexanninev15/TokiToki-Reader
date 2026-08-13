@@ -3,6 +3,7 @@ package io.github.zalexanninev15.tokitoki.ui.feed
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import io.github.zalexanninev15.tokitoki.data.db.AccountEntity
 import io.github.zalexanninev15.tokitoki.data.repo.FeedRepository
 import io.github.zalexanninev15.tokitoki.domain.model.FeedItem
 import io.github.zalexanninev15.tokitoki.domain.model.FeedItemId
@@ -86,14 +87,12 @@ class FeedViewModel(private val repository: FeedRepository) : ViewModel() {
         val enabled = all.filter { it.enabled }
         val tabs = buildList {
             add(FeedTab(accountLocalId = null, title = FeedTab.ALL_TITLE))
-            enabled.forEach { add(FeedTab(it.localId, it.handle)) }
+            enabled.forEach { add(FeedTab(it.localId, it.tabTitle())) }
         }
         val safeIndex = index.coerceIn(0, (tabs.size - 1).coerceAtLeast(0))
         val current = tabs.getOrNull(safeIndex)
 
-        val labels = enabled.associate { account ->
-            account.localId to "${'$'}{account.source.lowercase()} · ${'$'}{account.handle}"
-        }
+        val labels = enabled.associate { account -> account.localId to account.sourceLabel() }
 
         FeedUiState(
             items = items.filter { current == null || current.isAll ||
@@ -142,6 +141,18 @@ class FeedViewModel(private val repository: FeedRepository) : ViewModel() {
         synchronized(pendingSeen) { pendingSeen += seen }
         seenChannel.trySend(seen)
     }
+
+    /** "Misskey (@user)" — service first, local part of the handle in brackets. */
+    private fun AccountEntity.tabTitle(): String = "${prettySource()} (@${localPart()})"
+
+    /** "Misskey:user" — shown under the author handle in the merged feed. */
+    private fun AccountEntity.sourceLabel(): String = "${prettySource()}:${localPart()}"
+
+    private fun AccountEntity.prettySource(): String =
+        source.lowercase().replaceFirstChar(Char::uppercase)
+
+    private fun AccountEntity.localPart(): String =
+        handle.removePrefix("@").substringBefore('@')
 
     fun selectTab(index: Int) {
         tabIndex.value = index

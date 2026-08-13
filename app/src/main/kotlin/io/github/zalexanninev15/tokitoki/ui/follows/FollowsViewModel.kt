@@ -1,7 +1,13 @@
 package io.github.zalexanninev15.tokitoki.ui.follows
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import androidx.lifecycle.ViewModel
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.LocaleProvider
 import androidx.lifecycle.viewModelScope
 import io.github.zalexanninev15.tokitoki.data.repo.FollowsRepository
 import io.github.zalexanninev15.tokitoki.domain.model.FollowedAccount
@@ -49,8 +55,7 @@ class FollowsViewModel(
             append("    {")
             append("\"handle\": \"").append(account.handle.escapeJson()).append("\", ")
             append("\"name\": \"").append(account.displayName.escapeJson()).append("\", ")
-            append("\"url\": \"").append(account.profileUrl.orEmpty().escapeJson()).append("\", ")
-            append("\"source\": \"").append(account.source.name.lowercase()).append("\"}")
+            append("\"url\": \"").append(account.profileUrl.orEmpty().escapeJson()).append("\"}")
             if (index != _state.value.accounts.lastIndex) append(",")
             append("\n")
         }
@@ -67,6 +72,18 @@ class FollowsViewModel(
             }
         }
     }
+
+    /** user_instance_follows_YYYY-MM-DD_HH-mm.json */
+    fun exportFileName(): String {
+        val first = _state.value.accounts.firstOrNull()
+        val user = first?.handle?.removePrefix("@")?.substringBefore('@') ?: "account"
+        val instance = first?.handle?.substringAfterLast('@') ?: "instance"
+        val stamp = SimpleDateFormat("yyyy-MM-dd_HH-mm", Locale.US).format(Date())
+        return "${sanitise(user)}_${sanitise(instance)}_follows_$stamp.json"
+    }
+
+    private fun sanitise(value: String): String =
+        value.filter { it.isLetterOrDigit() || it == '-' || it == '.' }.ifEmpty { "x" }
 
     class Factory(
         private val repository: FollowsRepository,

@@ -89,14 +89,23 @@ fun FeedItemCard(
                         maxLines = 1,
                     )
                     Text(
-                        text = sourceLabel
-                            ?.let { "${item.author.handle} ($it)" }
-                            ?: item.author.handle,
+                        text = item.author.handle,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
+                    // On its own line below the handle: the two read as one blob when
+                    // they sit side by side, since both are @-prefixed.
+                    sourceLabel?.let { label ->
+                        Text(
+                            text = label,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                 }
                 Text(
                     text = remember(item.createdAtEpochMillis) {

@@ -80,7 +80,7 @@ fun FollowsScreen(
                             scope.launch {
                                 val result = Downloads.saveText(
                                     context,
-                                    "tokitoki_follows_${System.currentTimeMillis()}.json",
+                                    viewModel.exportFileName(),
                                     viewModel.exportJson(),
                                 )
                                 snackbar.showSnackbar(

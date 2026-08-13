@@ -76,41 +76,12 @@ fun FeedScreen(
     LaunchedEffect(pagerState.currentPage) { viewModel.selectTab(pagerState.currentPage) }
 
     val context = LocalContext.current
-    val listState = rememberLazyListState()
     val snackbarHost = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
     val copiedMessage = stringResource(R.string.link_copied)
 
     LaunchedEffect(Unit) { viewModel.refresh() }
-
-    // Visibility reporting. layoutInfo already knows how much of each item is on screen,
-    // so the fraction is derived from it rather than from per-item position callbacks,
-    // which would fire far more often for the same information.
-    LaunchedEffect(listState, state.items) {
-        snapshotFlow { listState.layoutInfo }.collect { info ->
-            val viewportStart = info.viewportStartOffset
-            val viewportEnd = info.viewportEndOffset
-            info.visibleItemsInfo.forEach { visible ->
-                val item = state.items.getOrNull(visible.index) ?: return@forEach
-                if (visible.size <= 0) return@forEach
-                val top = visible.offset.coerceAtLeast(viewportStart)
-                val bottom = (visible.offset + visible.size).coerceAtMost(viewportEnd)
-                val fraction = ((bottom - top).toFloat() / visible.size).coerceIn(0f, 1f)
-                viewModel.onVisibility(item.id, fraction)
-            }
-        }
-    }
-
-    // Infinite scroll: request the next page while a screenful still remains.
-    LaunchedEffect(listState) {
-        snapshotFlow {
-            val last = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
-            last to listState.layoutInfo.totalItemsCount
-        }.collect { (last, total) ->
-            if (total > 0 && last >= total - 5) viewModel.loadMore()
-        }
-    }
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHost) },
@@ -160,8 +131,43 @@ fun FeedScreen(
 
             HorizontalPager(
                 state = pagerState,
+                // Neighbouring pages are pre-composed. With a single shared LazyListState
+                // they all drove the same scroll position, which is what made the list
+                // stutter; each page gets its own state instead.
+                beyondViewportPageCount = 0,
+                key = { index -> state.tabs.getOrNull(index)?.accountLocalId ?: "all" },
                 modifier = Modifier.fillMaxSize(),
-            ) { _ ->
+            ) { page ->
+            val pageListState = rememberLazyListState()
+
+        // Visibility reporting. layoutInfo already knows how much of each item is on screen,
+        // so the fraction is derived from it rather than from per-item position callbacks,
+        // which would fire far more often for the same information.
+        LaunchedEffect(pageListState, state.items) {
+            snapshotFlow { pageListState.layoutInfo }.collect { info ->
+                val viewportStart = info.viewportStartOffset
+                val viewportEnd = info.viewportEndOffset
+                info.visibleItemsInfo.forEach { visible ->
+                    val item = state.items.getOrNull(visible.index) ?: return@forEach
+                    if (visible.size <= 0) return@forEach
+                    val top = visible.offset.coerceAtLeast(viewportStart)
+                    val bottom = (visible.offset + visible.size).coerceAtMost(viewportEnd)
+                    val fraction = ((bottom - top).toFloat() / visible.size).coerceIn(0f, 1f)
+                    viewModel.onVisibility(item.id, fraction)
+                }
+            }
+        }
+
+        // Infinite scroll: request the next page while a screenful still remains.
+        LaunchedEffect(pageListState) {
+            snapshotFlow {
+                val last = pageListState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+                last to pageListState.layoutInfo.totalItemsCount
+            }.collect { (last, total) ->
+                if (total > 0 && last >= total - 5) viewModel.loadMore()
+            }
+        }
+
             PullToRefreshBox(
                 isRefreshing = state.isRefreshing,
                 onRefresh = viewModel::refresh,
@@ -176,7 +182,7 @@ fun FeedScreen(
                     )
 
                     else -> LazyColumn(
-                        state = listState,
+                        state = pageListState,
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = androidx.compose.foundation.layout.PaddingValues(12.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp),

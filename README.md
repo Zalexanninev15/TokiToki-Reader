@@ -4,6 +4,8 @@
 ![version](https://img.shields.io/badge/version-0.1_pre--alpha-orange)
 ![license](https://img.shields.io/badge/license-MIT-blue)
 
+**Русский** · [English](README.en.md) · [日本語](README.ja.md)
+
 Читалка лент Mastodon и Misskey в одном приложении. Общая лента, отдельная вкладка на каждый аккаунт, синхронизация прочитанного с сервером там, где это вообще возможно.
 
 > [!WARNING]

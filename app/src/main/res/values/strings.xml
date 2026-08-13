@@ -65,5 +65,17 @@
     <string name="image_save_failed">Could not save the image</string>
     <string name="follows_exported">Saved: %1$s</string>
     <string name="follows_export_failed">Could not save the file</string>
-    <string name="misskey_hint">Misskey (also Sharkey, Iceshrimp, CherryPick)</string>
+    <string name="misskey_hint">Also Sharkey, Iceshrimp, CherryPick and other forks</string>
+    <string name="update_check">Check for updates</string>
+    <string name="update_up_to_date">You have the latest version</string>
+    <string name="update_available">New version available: %1$s</string>
+    <string name="update_open">Open release page</string>
+    <string name="update_failed">Could not check for updates</string>
+    <string name="misskey_title">Misskey (and Sharkey)</string>
+    <string name="mastodon_hint">Also Pleroma, Akkoma, GoToSocial</string>
+    <string name="instance_url_hint">Instance address, with or without https://</string>
+    <string name="language_system">System default</string>
+    <string name="language_en">English</string>
+    <string name="language_ru">Russian</string>
+    <string name="language_ja">Japanese</string>
 </resources>

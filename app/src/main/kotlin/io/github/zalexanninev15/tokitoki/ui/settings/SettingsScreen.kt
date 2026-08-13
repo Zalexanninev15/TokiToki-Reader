@@ -2,7 +2,9 @@ package io.github.zalexanninev15.tokitoki.ui.settings
 
 import android.os.Build
 import androidx.compose.foundation.layout.Arrangement
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.layout.Column
+import androidx.core.os.LocaleListCompat
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -120,6 +122,35 @@ fun SettingsScreen(container: AppContainer, onBack: () -> Unit) {
                     ),
                     selected = settings.fontSize == size,
                     onSelect = { scope.launch { container.settingsStore.setFontSize(size) } },
+                )
+            }
+
+            HorizontalDivider()
+            SectionTitle(stringResource(R.string.language))
+            // AppCompatDelegate rather than recreating the activity by hand: it is what
+            // the system per-app language setting reads on API 33+, so the choice made
+            // here and the one made in Android settings stay the same choice.
+            listOf(
+                null to R.string.language_system,
+                "en" to R.string.language_en,
+                "ru" to R.string.language_ru,
+                "ja" to R.string.language_ja,
+            ).forEach { (tag, labelRes) ->
+                val current = AppCompatDelegate.getApplicationLocales()
+                    .toLanguageTags().takeIf { it.isNotBlank() }?.substringBefore('-')
+                RadioRow(
+                    label = stringResource(labelRes),
+                    selected = current == tag,
+                    onSelect = {
+                        AppCompatDelegate.setApplicationLocales(
+                            if (tag == null) {
+                                LocaleListCompat.getEmptyLocaleList()
+                            } else {
+                                LocaleListCompat.forLanguageTags(tag)
+                            },
+                        )
+                        scope.launch { container.settingsStore.setLanguage(tag) }
+                    },
                 )
             }
 
