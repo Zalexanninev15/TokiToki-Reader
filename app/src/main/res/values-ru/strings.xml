@@ -41,4 +41,10 @@
     <string name="cd_close">Закрыть</string>
     <string name="cd_back">Назад</string>
     <string name="cd_more">Ещё действия</string>
+    <string name="follows_title">Подписки</string>
+    <string name="follows_count">%1$d аккаунтов</string>
+    <string name="follows_empty">Подписок не найдено</string>
+    <string name="follows_bot">БОТ</string>
+    <string name="action_back">Назад</string>
+    <string name="action_follows">Подписки</string>
 </resources>

@@ -1,0 +1,170 @@
+# TokiToki Reader — технические заметки
+
+Пользовательское описание — в [README.md](README.md). Здесь то, что нужно при работе с кодом.
+
+Клиент-агрегатор для Mastodon, Misskey и Telegram-каналов: одна лента, три источника,
+и синхронизация прочитанного с исходными сервисами настолько, насколько это позволяют
+их официальные API.
+
+Gradle-модуль называется `tokitoki-reader`, пакет — `io.github.zalexanninev15.tokitoki`.
+Никаких сторонних логотипов, персонажей и товарных знаков в проекте нет.
+
+---
+
+## Статус
+
+| Модуль | Состояние | Проверка |
+|---|---|---|
+| `:domain` | готов | 30 тестов |
+| `:data:mastodon` | API, маппер, парсеры, markers-синхронизация | 19 тестов |
+| `:data:misskey` | API, маппер, MFM, определение форка | 28 тестов |
+| `:app` | Compose UI, Room-кэш, авторизация, настройки | собирается в CI |
+| Telegram | не начат | — |
+
+CI собирает `app-debug.apk` и кладёт его в артефакты сборки. Telegram отложен
+осознанно: TDLib требует отдельного `api_id`, нативной сборки и ABI split, и его
+отсутствие не мешает Mastodon и Misskey работать.
+
+---
+
+## Read-state: главное, что нужно знать
+
+Три сервиса дают три разных уровня, и приложение обязано это показывать, а не
+делать вид, что галочка везде означает одно и то же.
+
+| Сервис | Механизм | Гранулярность | Как в официальном клиенте |
+|---|---|---|---|
+| Telegram | TDLib `openChat` / `viewMessages` / `closeChat` | каждое сообщение | да |
+| Mastodon | `POST /api/v1/markers` | один курсор на всю ленту | да |
+| Misskey | нет | — | нет |
+
+### Mastodon
+
+Единственный официальный механизм — markers, добавленные в 3.0. Ограничения:
+
+- только `home` и `notifications`, для списков и хэштегов markers не существует;
+- это курсор, а не флаг: «прочитать №5, оставив №3» невозможно;
+- `version` — оптимистическая блокировка, при конфликте нужен повторный чтение-запись;
+- курсор общий со всеми клиентами аккаунта, поэтому он **никогда не двигается назад**
+  (`TimelineCursorPolicy`);
+- Pleroma, Akkoma и GoToSocial могут не реализовывать markers — 404 трактуется как
+  отсутствие возможности, а не как ошибка.
+
+### Misskey
+
+**Аналога markers нет.** Ни курсора таймлайна, ни per-note флага. Существуют только:
+
+- `notifications/mark-all-as-read` — уведомления;
+- `i/read-all-unread-notes` — заметки с упоминанием или адресованные лично;
+- `hasUnreadNote` у антенн — единственное место с серверным флагом непрочитанного.
+
+Обычный пост от подписки останется непрочитанным на сервере, что бы пользователь ни
+делал в приложении. Экран «Ленты» сообщает об этом словами.
+
+Дополнительно: `notes/timeline` отдаёт заметки примерно за последние 30 дней
+(misskey-dev/misskey#10063), глубже история недоступна.
+
+### Telegram
+
+Здесь возможности полные, но есть внешние ограничения:
+
+- `api_id`/`api_hash` нужно получить самому на my.telegram.org; один номер = один `api_id`;
+- sample-значения из открытых исходников дают `API_ID_PUBLISHED_FLOOD` в проде;
+- аккаунты, входящие через неофициальные клиенты, автоматически ставятся под наблюдение;
+- по Telegram API ToS: слово «Telegram» в названии запрещено (кроме «Unofficial …»),
+  официальный логотип использовать нельзя, факт использования Telegram API должен быть
+  указан в описании приложения;
+- TDLib нет в Maven Central — нужна сборка через NDK или prebuilt-бандл, ~30–40 МБ `.so`
+  на ABI, из-за чего ABI split обязателен;
+- ссылка на сообщение существует только для каналов с username; для приватных каналов
+  кнопка «Копировать ссылку» отключается, а не подставляет несуществующий URL.
+
+---
+
+## Лимиты запросов
+
+| Сервис | Лимит |
+|---|---|
+| Mastodon | 300 запросов / 5 мин на аккаунт, 7500 / 5 мин на IP; см. `X-RateLimit-*` |
+| Misskey | задаётся ролями конкретного инстанса, глобальных цифр нет — только реакция на 429 |
+| Telegram | контролируется самим TDLib, плюс FLOOD_WAIT со стороны сервера |
+
+Поллинга нет: обновление по pull-to-refresh, фоновая синхронизация через WorkManager,
+для новых событий — Streaming API у Misskey и апдейты TDLib.
+
+---
+
+## Архитектура
+
+```
+:domain          модели, ReadSyncCapability, интерфейсы репозиториев. Без Android.
+:data:mastodon   MastodonApi, MastodonPostMapper, MastodonHtmlParser, markers-синхронизация
+:data:misskey    MisskeyApi, MisskeyPostMapper, MfmParser, определение форка
+:data:telegram   (планируется) обёртка TDLib
+:core:database   (планируется) Room: лента, аккаунты, очередь read-sync
+:core:datastore  (планируется) настройки + токены через Keystore
+:feature:*       (планируется) Compose UI
+:app             (планируется) сборка APK
+```
+
+Источники разделены намеренно. У трёх сервисов несовместимая пагинация (`Link`-заголовки
+против `untilId` против апдейтов TDLib) и несовместимая модель текста (HTML против MFM
+против entity-диапазонов). Сведение этого к одному интерфейсу на уровне network layer —
+ровно та ошибка, из-за которой подобные агрегаторы становятся неподдерживаемыми.
+
+Общий знаменатель — `RichText`: плоский текст плюс диапазоны-спаны. Все три источника
+приводятся к нему, и в UI существует ровно один рендерер.
+
+---
+
+## Сборка
+
+### Локально
+
+```bash
+./gradlew build     # компиляция всех модулей + 77 тестов
+```
+
+Нужен JDK 17+. Wrapper в репозиторий не закоммичен намеренно: бинарный
+`gradle-wrapper.jar`, который CI затем исполняет, — лишний supply-chain риск. Создать его:
+
+```bash
+gradle wrapper --gradle-version 8.10.2
+```
+
+### В CI
+
+`.github/workflows/build.yml` собирает и прогоняет тесты на каждый push (`build` уже
+включает `test`, поэтому шаг один). Отчёты
+выкладываются артефактом. Шаг сборки APK закомментирован до появления модуля `:app` —
+чтобы не создавать иллюзию, что APK уже собирается.
+
+---
+
+## Секреты
+
+Ни один токен в репозиторий не попадает. Шаблон — `.env.example`.
+
+Для Telegram потребуются `TELEGRAM_API_ID` и `TELEGRAM_API_HASH` с my.telegram.org.
+В CI они кладутся в GitHub Secrets, локально — в `local.properties`, который в `.gitignore`.
+
+Mastodon и Misskey секретов не требуют: Mastodon регистрирует приложение динамически
+через `POST /api/v1/apps`, Misskey использует MiAuth без предварительной регистрации.
+
+---
+
+## Официальная документация
+
+- Mastodon markers — https://docs.joinmastodon.org/methods/markers/
+- Mastodon rate limits — https://docs.joinmastodon.org/api/rate-limits/
+- Mastodon apps — https://docs.joinmastodon.org/methods/apps/
+- Misskey API — https://misskey-hub.net/en/docs/for-developers/api/
+- Misskey MiAuth — https://misskey-hub.net/en/docs/for-developers/api/token/miauth/
+- TDLib `viewMessages` — https://core.telegram.org/tdlib/docs/classtd_1_1td__api_1_1view__messages.html
+- Telegram api_id — https://core.telegram.org/api/obtaining_api_id
+- Telegram API ToS — https://core.telegram.org/api/terms
+
+## Лицензия
+
+Код — MIT. TDLib, когда он появится в проекте, распространяется под Boost Software
+License 1.0 и остаётся под ней.

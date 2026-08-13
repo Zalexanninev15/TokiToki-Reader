@@ -11,6 +11,7 @@ import retrofit2.http.FormUrlEncoded
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
+import retrofit2.http.Path
 import retrofit2.http.Query
 import retrofit2.http.Url
 
@@ -78,6 +79,24 @@ interface MastodonApi {
         @Header("Authorization") bearer: String,
         @Url url: String,
     ): Response<List<StatusDto>>
+
+    /**
+     * Accounts the user follows. Paginated through the `Link` header like timelines;
+     * `limit` is capped at 80 by the server regardless of what is asked for.
+     */
+    @GET("api/v1/accounts/{id}/following")
+    suspend fun following(
+        @Header("Authorization") bearer: String,
+        @Path("id") accountId: String,
+        @Query("limit") limit: Int = 80,
+    ): Response<List<MastodonAccountDto>>
+
+    /** Follows a `Link: rel="next"` URL from [following] verbatim. */
+    @GET
+    suspend fun followingPage(
+        @Header("Authorization") bearer: String,
+        @Url url: String,
+    ): Response<List<MastodonAccountDto>>
 
     /**
      * Read markers. Requires `read:statuses`.

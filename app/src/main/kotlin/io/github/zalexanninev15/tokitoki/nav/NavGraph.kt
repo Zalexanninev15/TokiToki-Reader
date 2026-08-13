@@ -11,7 +11,13 @@ import androidx.navigation.navArgument
 import io.github.zalexanninev15.tokitoki.AppContainer
 import io.github.zalexanninev15.tokitoki.ui.accounts.AccountsScreen
 import io.github.zalexanninev15.tokitoki.ui.auth.AddAccountScreen
+import androidx.browser.customtabs.CustomTabsIntent
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.net.toUri
+import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.zalexanninev15.tokitoki.ui.feed.FeedScreen
+import io.github.zalexanninev15.tokitoki.ui.follows.FollowsScreen
+import io.github.zalexanninev15.tokitoki.ui.follows.FollowsViewModel
 import io.github.zalexanninev15.tokitoki.ui.media.ImageViewerScreen
 import io.github.zalexanninev15.tokitoki.ui.settings.SettingsScreen
 
@@ -21,6 +27,9 @@ object Routes {
     const val ADD_ACCOUNT = "accounts/add"
     const val SETTINGS = "settings"
     const val IMAGE = "image/{url}"
+    const val FOLLOWS = "follows/{accountId}"
+
+    fun follows(accountId: String): String = "follows/${Uri.encode(accountId)}"
 
     fun image(url: String): String = "image/" + Uri.encode(url)
 }
@@ -49,6 +58,9 @@ fun TokiTokiNavHost(
                 container = container,
                 onOpenSettings = { navController.navigate(Routes.SETTINGS) },
                 onOpenAccounts = { navController.navigate(Routes.ACCOUNTS) },
+                // Long-pressing a source tab jumps straight to that account's
+                // subscriptions, which is the shortcut requested for the feature.
+                onOpenFollows = { id -> navController.navigate(Routes.follows(id)) },
                 onOpenImage = { url -> navController.navigate(Routes.image(url)) },
             )
         }
@@ -58,6 +70,26 @@ fun TokiTokiNavHost(
                 container = container,
                 onBack = { navController.popBackStack() },
                 onAddAccount = { navController.navigate(Routes.ADD_ACCOUNT) },
+                onOpenFollows = { id -> navController.navigate(Routes.follows(id)) },
+            )
+        }
+
+        composable(
+            route = Routes.FOLLOWS,
+            arguments = listOf(navArgument("accountId") { type = NavType.StringType }),
+        ) { entry ->
+            val context = LocalContext.current
+            val accountId = Uri.decode(entry.arguments?.getString("accountId").orEmpty())
+            val viewModel: FollowsViewModel = viewModel(
+                factory = FollowsViewModel.Factory(container.followsRepository, accountId),
+            )
+            FollowsScreen(
+                viewModel = viewModel,
+                onBack = { navController.popBackStack() },
+                onOpenProfile = { url ->
+                    CustomTabsIntent.Builder().setShowTitle(true).build()
+                        .launchUrl(context, url.toUri())
+                },
             )
         }
 

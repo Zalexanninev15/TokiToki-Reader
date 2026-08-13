@@ -13,6 +13,8 @@ data class AccountEntity(
     val handle: String,
     val displayName: String,
     val avatarUrl: String?,
+    /** Id of this user ON their own server. Needed for the following/subscriptions call. */
+    val remoteUserId: String = "",
     /** Toggled from the Feeds screen; a disabled account keeps its cache and token. */
     val enabled: Boolean = true,
 )

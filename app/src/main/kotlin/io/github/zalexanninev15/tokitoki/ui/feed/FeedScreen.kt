@@ -24,6 +24,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Tab
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -49,17 +51,21 @@ import io.github.zalexanninev15.tokitoki.R
 import io.github.zalexanninev15.tokitoki.ui.components.FeedItemCard
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun FeedScreen(
     container: AppContainer,
     onOpenSettings: () -> Unit,
     onOpenAccounts: () -> Unit,
     onOpenImage: (String) -> Unit,
+    onOpenFollows: (String) -> Unit = {},
 ) {
     val viewModel: FeedViewModel = viewModel(
         factory = FeedViewModel.Factory(container.feedRepository),
     )
+    val accounts by container.feedRepository.observeAccounts()
+        .collectAsStateWithLifecycle(initialValue = emptyList())
+    val followsLabel = stringResource(R.string.action_follows)
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val tab by viewModel.selectedTab.collectAsStateWithLifecycle()
 
@@ -122,6 +128,23 @@ fun FeedScreen(
                     Tab(
                         selected = tab == entry,
                         onClick = { viewModel.selectTab(entry) },
+                        modifier = Modifier.combinedClickable(
+                            onClick = { viewModel.selectTab(entry) },
+                            onLongClick = {
+                                // Long press jumps to the subscriptions of the first
+                                // connected account for that source.
+                                val source = when (entry) {
+                                    FeedTab.MASTODON -> SourceKind.MASTODON
+                                    FeedTab.MISSKEY -> SourceKind.MISSKEY
+                                    FeedTab.ALL -> null
+                                }
+                                val target = accounts.firstOrNull {
+                                    source == null || it.source == source.name
+                                }
+                                target?.let { onOpenFollows(it.localId) }
+                            },
+                            onLongClickLabel = followsLabel,
+                        ),
                         text = {
                             Text(
                                 when (entry) {

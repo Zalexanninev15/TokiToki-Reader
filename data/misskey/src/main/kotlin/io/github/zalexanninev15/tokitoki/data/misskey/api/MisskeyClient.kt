@@ -50,7 +50,7 @@ class MisskeyRemoteSource(
     private val mapper: MisskeyPostMapper,
 ) {
 
-    suspend fun loadPage(cursor: PageCursor?, limit: Int = 30): Page {
+    suspend fun loadPage(cursor: PageCursor?, limit: Int = 60): Page {
         val notes = try {
             api.homeTimeline(TimelineRequest(i = token, limit = limit, untilId = cursor?.raw))
         } catch (e: IOException) {
@@ -65,7 +65,10 @@ class MisskeyRemoteSource(
         }
 
         val items: List<FeedItem> = notes.map(mapper::map)
-        val next = if (notes.size < limit) null else notes.lastOrNull()?.id?.let(::PageCursor)
+        // Only an empty page means the end. Misskey routinely returns fewer notes than
+        // requested — visibility filtering and muting are applied after the limit — so
+        // treating a short page as exhaustion truncates the timeline early.
+        val next = notes.lastOrNull()?.id?.let(::PageCursor)
         return Page(items, next)
     }
 }

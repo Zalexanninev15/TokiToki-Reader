@@ -46,6 +46,7 @@ fun AccountsScreen(
     container: AppContainer,
     onBack: () -> Unit,
     onAddAccount: () -> Unit,
+    onOpenFollows: (String) -> Unit = {},
 ) {
     val accounts by container.feedRepository.observeAccounts()
         .map { it }

@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flatMapLatest
@@ -49,22 +50,30 @@ class FeedViewModel(private val repository: FeedRepository) : ViewModel() {
     private val accounts = repository.observeAccounts()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    val uiState: StateFlow<FeedUiState> = accounts
+    private val feed = accounts
         .flatMapLatest { all ->
             val visible = all.filter { it.enabled }
             repository.observeFeed(visible.map { it.localId }).map { items -> all to items }
         }
-        .map { (all, items) ->
-            FeedUiState(
-                items = items.filter { it.matches(tab.value) },
-                readIds = emptySet(),
-                isRefreshing = refreshing.value,
-                isLoadingMore = loadingMore.value,
-                hasAccounts = all.isNotEmpty(),
-                errorMessage = error.value,
-            )
-        }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), FeedUiState())
+
+    // combine, not `map` reading `.value`: a StateFlow read inside map does not make the
+    // outer flow re-emit, so switching tabs used to leave the previous list on screen.
+    val uiState: StateFlow<FeedUiState> = combine(
+        feed,
+        tab,
+        refreshing,
+        loadingMore,
+        error,
+    ) { (all, items), currentTab, isRefreshing, isLoadingMore, errorMessage ->
+        FeedUiState(
+            items = items.filter { it.matches(currentTab) },
+            readIds = emptySet(),
+            isRefreshing = isRefreshing,
+            isLoadingMore = isLoadingMore,
+            hasAccounts = all.isNotEmpty(),
+            errorMessage = errorMessage,
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), FeedUiState())
 
     init {
         // Acknowledgements are batched: a scroll can produce dozens of "seen" events per

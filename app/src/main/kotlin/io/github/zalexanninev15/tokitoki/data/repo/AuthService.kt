@@ -123,6 +123,7 @@ class AuthService(
                 handle = if ('@' in me.acct) "@${me.acct}" else "@${me.acct}@$host",
                 displayName = me.displayName.ifBlank { me.username },
                 avatarUrl = me.avatar,
+                remoteUserId = me.id,
             ),
         )
         return localId
@@ -149,6 +150,7 @@ class AuthService(
                 handle = "@${me.username}@${me.host ?: host}",
                 displayName = me.name?.takeIf { it.isNotBlank() } ?: me.username,
                 avatarUrl = me.avatarUrl,
+                remoteUserId = me.id,
             ),
         )
         return localId

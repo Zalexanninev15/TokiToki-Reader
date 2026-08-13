@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 
 @Database(
     entities = [AccountEntity::class, FeedItemEntity::class, ReadQueueEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = false,
 )
 abstract class TokiTokiDatabase : RoomDatabase() {

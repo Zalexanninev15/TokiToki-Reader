@@ -96,3 +96,18 @@ data class AntennaDto(
     val name: String,
     val hasUnreadNote: Boolean = false,
 )
+
+@Serializable
+data class FollowingRequest(
+    val i: String,
+    val userId: String,
+    val limit: Int = 100,
+    val untilId: String? = null,
+)
+
+@Serializable
+data class FollowingDto(
+    val id: String,
+    val followeeId: String? = null,
+    val followee: MisskeyUserDto? = null,
+)

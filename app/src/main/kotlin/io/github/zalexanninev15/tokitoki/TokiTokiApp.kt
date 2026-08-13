@@ -5,6 +5,7 @@ import io.github.zalexanninev15.tokitoki.data.db.TokiTokiDatabase
 import io.github.zalexanninev15.tokitoki.data.prefs.SettingsStore
 import io.github.zalexanninev15.tokitoki.data.repo.AuthService
 import io.github.zalexanninev15.tokitoki.data.repo.FeedRepository
+import io.github.zalexanninev15.tokitoki.data.repo.FollowsRepository
 import io.github.zalexanninev15.tokitoki.data.secure.SecureStore
 import io.github.zalexanninev15.tokitoki.data.sync.ReadSyncWorker
 
@@ -27,6 +28,10 @@ class AppContainer(app: Application) {
             readQueueDao = database.readQueueDao(),
             secureStore = secureStore,
         )
+    }
+
+    val followsRepository: FollowsRepository by lazy {
+        FollowsRepository(accountDao = database.accountDao(), secureStore = secureStore)
     }
 
     val authService: AuthService by lazy {

@@ -1,6 +1,8 @@
 package io.github.zalexanninev15.tokitoki.data.misskey.api
 
 import io.github.zalexanninev15.tokitoki.data.misskey.dto.AntennaDto
+import io.github.zalexanninev15.tokitoki.data.misskey.dto.FollowingDto
+import io.github.zalexanninev15.tokitoki.data.misskey.dto.FollowingRequest
 import io.github.zalexanninev15.tokitoki.data.misskey.dto.AntennaNotesRequest
 import io.github.zalexanninev15.tokitoki.data.misskey.dto.CredentialRequest
 import io.github.zalexanninev15.tokitoki.data.misskey.dto.MiAuthCheckDto
@@ -54,6 +56,13 @@ interface MisskeyApi {
      */
     @POST("api/i/read-all-unread-notes")
     suspend fun readAllUnreadNotes(@Body request: NotificationsReadRequest): Response<Unit>
+
+    /**
+     * Accounts the user follows. Misskey wraps each entry, so the followee sits one level
+     * down rather than being the list element itself.
+     */
+    @POST("api/users/following")
+    suspend fun following(@Body request: FollowingRequest): List<FollowingDto>
 
     @POST("api/antennas/list")
     suspend fun antennas(@Body request: CredentialRequest): List<AntennaDto>

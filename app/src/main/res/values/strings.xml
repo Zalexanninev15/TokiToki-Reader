@@ -44,4 +44,10 @@
     <string name="cd_close">Close</string>
     <string name="cd_back">Back</string>
     <string name="cd_more">More actions</string>
+    <string name="follows_title">Subscriptions</string>
+    <string name="follows_count">%1$d accounts</string>
+    <string name="follows_empty">No subscriptions found</string>
+    <string name="follows_bot">BOT</string>
+    <string name="action_back">Back</string>
+    <string name="action_follows">Subscriptions</string>
 </resources>
