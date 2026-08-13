@@ -102,4 +102,7 @@
     <string name="action_favourite">お気に入り</string>
     <string name="post_sent">投稿しました</string>
     <string name="action_new_post">新規投稿</string>
+    <string name="offline_save_feed">オフライン用に保存</string>
+    <string name="offline_saved">投稿 %1$s 件、画像 %2$s 件を保存しました</string>
+    <string name="offline_save_post">投稿を保存</string>
 </resources>

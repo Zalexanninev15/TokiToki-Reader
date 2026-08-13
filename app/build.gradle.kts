@@ -14,8 +14,8 @@ android {
         applicationId = "io.github.zalexanninev15.tokitoki"
         minSdk = 26
         targetSdk = 35
-        versionCode = 3
-        versionName = "0.3-alpha"
+        versionCode = 4
+        versionName = "0.4-alpha"
 
         // Consumed by the OAuth/MiAuth redirect intent filters in the manifest.
         manifestPlaceholders["authScheme"] = "tokitoki"

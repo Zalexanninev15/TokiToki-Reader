@@ -1,0 +1,101 @@
+name: build tdlib
+
+# Manual only, and deliberately separate from the app build.
+#
+# TDLib for Android has no credential-free Maven artifact: the one on Maven Central is
+# from 2022, the GitHub Packages build needs a token even to read, and the Telegram X
+# bundle states it is not for third-party projects. So it is built from source with the
+# official scripts from tdlib/td, which also generate TdApi.java — the Java bindings the
+# app will compile against.
+#
+# This takes 40-90 minutes. It runs on demand, the result is cached by TDLib commit, and
+# the APK workflow is untouched by it.
+
+on:
+  workflow_dispatch:
+    inputs:
+      td_ref:
+        description: 'tdlib/td git ref to build'
+        default: 'master'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: TDLib for Android
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gperf php-cli perl cmake ninja-build
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Checkout tdlib/td
+        uses: actions/checkout@v4
+        with:
+          repository: tdlib/td
+          ref: ${{ inputs.td_ref }}
+          path: td
+
+      - name: Resolve TDLib commit
+        id: commit
+        working-directory: td
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      # OpenSSL is the slowest part and changes far less often than TDLib itself.
+      - name: Cache OpenSSL build
+        uses: actions/cache@v4
+        with:
+          path: td/example/android/third_party
+          key: tdlib-openssl-${{ runner.os }}
+
+      - name: Cache built TDLib
+        id: tdlib-cache
+        uses: actions/cache@v4
+        with:
+          path: td/example/android/tdlib
+          key: tdlib-${{ runner.os }}-${{ steps.commit.outputs.sha }}
+
+      - name: Check environment
+        if: steps.tdlib-cache.outputs.cache-hit != 'true'
+        working-directory: td/example/android
+        run: ./check-environment.sh
+
+      - name: Fetch Android SDK
+        if: steps.tdlib-cache.outputs.cache-hit != 'true'
+        working-directory: td/example/android
+        run: ./fetch-sdk.sh
+
+      - name: Build OpenSSL
+        if: steps.tdlib-cache.outputs.cache-hit != 'true'
+        working-directory: td/example/android
+        run: ./build-openssl.sh
+
+      - name: Build TDLib
+        if: steps.tdlib-cache.outputs.cache-hit != 'true'
+        working-directory: td/example/android
+        run: ./build-tdlib.sh
+
+      - name: Show what was produced
+        working-directory: td/example/android
+        run: |
+          echo "--- libs ---"
+          find tdlib/libs -name '*.so' -exec ls -la {} \; || true
+          echo "--- java bindings ---"
+          find tdlib/java -name 'TdApi.java' -exec ls -la {} \; || true
+
+      - name: Upload TDLib bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: tdlib-android-${{ steps.commit.outputs.sha }}
+          path: td/example/android/tdlib/tdlib.zip
+          if-no-files-found: error

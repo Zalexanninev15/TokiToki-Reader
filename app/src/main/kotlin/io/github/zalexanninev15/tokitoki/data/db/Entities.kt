@@ -51,6 +51,8 @@ data class FeedItemEntity(
     val boostCount: Int = 0,
     val replyCount: Int = 0,
     val myReaction: String? = null,
+    /** Saved for offline on purpose: never evicted by the cache trim. */
+    val pinned: Boolean = false,
     @ColumnInfo(defaultValue = "0") val locallyRead: Boolean = false,
     @ColumnInfo(defaultValue = "0") val remoteConfirmed: Boolean = false,
 )

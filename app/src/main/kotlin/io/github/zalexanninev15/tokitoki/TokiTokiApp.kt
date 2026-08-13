@@ -2,6 +2,7 @@ package io.github.zalexanninev15.tokitoki
 
 import android.app.Application
 import android.os.Build
+import coil.Coil
 import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.decode.GifDecoder
@@ -11,6 +12,7 @@ import io.github.zalexanninev15.tokitoki.data.prefs.SettingsStore
 import io.github.zalexanninev15.tokitoki.data.repo.AuthService
 import io.github.zalexanninev15.tokitoki.data.repo.FeedRepository
 import io.github.zalexanninev15.tokitoki.data.repo.FollowsRepository
+import io.github.zalexanninev15.tokitoki.data.repo.OfflineRepository
 import io.github.zalexanninev15.tokitoki.data.repo.PostActionsRepository
 import io.github.zalexanninev15.tokitoki.data.repo.ProfileRepository
 import io.github.zalexanninev15.tokitoki.data.secure.SecureStore
@@ -23,7 +25,7 @@ import io.github.zalexanninev15.tokitoki.data.sync.ReadSyncWorker
  * for a graph this small. Constructor injection is still used everywhere; this is just
  * the composition root.
  */
-class AppContainer(app: Application) {
+class AppContainer(private val app: Application) {
     val database: TokiTokiDatabase by lazy { TokiTokiDatabase.create(app) }
     val secureStore: SecureStore by lazy { SecureStore(app) }
     val settingsStore: SettingsStore by lazy { SettingsStore(app) }
@@ -39,6 +41,14 @@ class AppContainer(app: Application) {
 
     val followsRepository: FollowsRepository by lazy {
         FollowsRepository(accountDao = database.accountDao(), secureStore = secureStore)
+    }
+
+    val offlineRepository: OfflineRepository by lazy {
+        OfflineRepository(
+            context = app,
+            feedDao = database.feedDao(),
+            imageLoader = Coil.imageLoader(app),
+        )
     }
 
     val postActionsRepository: PostActionsRepository by lazy {

@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import io.github.zalexanninev15.tokitoki.data.db.AccountEntity
 import io.github.zalexanninev15.tokitoki.data.repo.FeedRepository
+import io.github.zalexanninev15.tokitoki.data.repo.OfflineRepository
 import io.github.zalexanninev15.tokitoki.data.repo.PostActionsRepository
 import io.github.zalexanninev15.tokitoki.domain.model.FeedItem
 import io.github.zalexanninev15.tokitoki.domain.model.FeedItemId
@@ -60,7 +61,11 @@ data class FeedUiState(
 class FeedViewModel(
     private val repository: FeedRepository,
     private val actions: PostActionsRepository? = null,
+    private val offline: OfflineRepository? = null,
 ) : ViewModel() {
+
+    private val _offlineMessage = MutableStateFlow<String?>(null)
+    val offlineMessage: StateFlow<String?> = _offlineMessage.asStateFlow()
 
     private val tabIndex = MutableStateFlow(0)
     private val filter = MutableStateFlow(FeedFilter())
@@ -203,6 +208,34 @@ class FeedViewModel(
         }
     }
 
+    /** Saves everything currently cached for the tab, or for all accounts on "All". */
+    fun saveForOffline(accountLocalId: String?, allAccountIds: List<String>) {
+        val repo = offline ?: return
+        viewModelScope.launch {
+            val ids = accountLocalId?.let(::listOf) ?: allAccountIds
+            val result = runCatching { repo.saveFeed(ids) }
+            _offlineMessage.value = result.fold(
+                onSuccess = { "${it.posts}/${it.images}" },
+                onFailure = { it.message },
+            )
+        }
+    }
+
+    fun savePost(item: FeedItem) {
+        val repo = offline ?: return
+        viewModelScope.launch {
+            val result = runCatching { repo.savePost(item.id) }
+            _offlineMessage.value = result.fold(
+                onSuccess = { "${it.posts}/${it.images}" },
+                onFailure = { it.message },
+            )
+        }
+    }
+
+    fun consumeOfflineMessage() {
+        _offlineMessage.value = null
+    }
+
     fun updateQuery(value: String) {
         filter.value = filter.value.copy(query = value)
     }
@@ -253,9 +286,10 @@ class FeedViewModel(
     class Factory(
         private val repository: FeedRepository,
         private val actions: PostActionsRepository? = null,
+        private val offline: OfflineRepository? = null,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            FeedViewModel(repository, actions) as T
+            FeedViewModel(repository, actions, offline) as T
     }
 }

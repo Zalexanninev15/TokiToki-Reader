@@ -1,7 +1,7 @@
 # TokiToki Reader
 
 ![platform](https://img.shields.io/badge/platform-Android_8.0%2B-3DDC84.svg?logo=android)
-![version](https://img.shields.io/badge/version-0.3_alpha-orange)
+![version](https://img.shields.io/badge/version-0.4_alpha-orange)
 ![license](https://img.shields.io/badge/license-MIT-blue)
 
 [Русский](README.md) · [English](README.en.md) · **日本語**
@@ -9,7 +9,7 @@
 Mastodon と Misskey のタイムラインをひとつのアプリで読むためのリーダーです。統合タイムライン、アカウントごとのタブ、そして可能な範囲でサーバーへ既読を反映します。
 
 > [!WARNING]
-> バージョン 0.3 alpha。未実装の機能が多く、粗い部分もあります。Telegram には未対応です。
+> バージョン 0.4 alpha。未実装の機能が多く、粗い部分もあります。Telegram には未対応です。
 
 ## 機能
 
@@ -19,6 +19,7 @@ Mastodon と Misskey のタイムラインをひとつのアプリで読むた�
 - 統合表示では投稿ごとに出所を表示（ハンドルの下に `Misskey:user`）
 - スクロールに応じて 10 件ずつ読み込み
 - ローカルキャッシュにより、オフラインでも閲覧可能
+- オフライン保存：投稿単位、またはタブ長押しでタイムライン全体
 - CW、ブースト、引用、返信に対応
 - タイムライン検索とフィルター（メディアあり・未読・ブースト以外）
 - 作者のプロフィールをアプリ内で表示（アイコンをタップ）
@@ -79,7 +80,7 @@ Pleroma、Akkoma、GoToSocial は `markers` に対応していない場合があ
 
 ## 未実装
 
-Telegram、通知、オフライン保存、投稿時の添付。
+Telegram、通知、投稿時の添付。
 
 ## フィードバック
 

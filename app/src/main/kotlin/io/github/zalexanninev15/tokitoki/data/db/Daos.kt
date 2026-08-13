@@ -58,10 +58,28 @@ interface FeedDao {
     @Query(
         """
         DELETE FROM feed_items
-        WHERE id NOT IN (SELECT id FROM feed_items ORDER BY createdAt DESC LIMIT :keep)
+        WHERE pinned = 0
+          AND id NOT IN (
+            SELECT id FROM feed_items WHERE pinned = 0 ORDER BY createdAt DESC LIMIT :keep
+          )
         """,
     )
     suspend fun trimTo(keep: Int)
+
+    @Query("UPDATE feed_items SET pinned = :pinned WHERE id = :id")
+    suspend fun setPinned(id: String, pinned: Boolean)
+
+    @Query("UPDATE feed_items SET pinned = 1 WHERE accountLocalId IN (:accountIds)")
+    suspend fun pinAll(accountIds: List<String>)
+
+    @Query("UPDATE feed_items SET pinned = 0")
+    suspend fun unpinAll()
+
+    @Query("SELECT COUNT(*) FROM feed_items WHERE pinned = 1")
+    suspend fun pinnedCount(): Int
+
+    @Query("SELECT * FROM feed_items WHERE accountLocalId IN (:accountIds) ORDER BY createdAt DESC LIMIT :limit")
+    suspend fun snapshot(accountIds: List<String>, limit: Int = 500): List<FeedItemEntity>
 }
 
 @Dao

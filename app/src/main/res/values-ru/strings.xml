@@ -99,4 +99,7 @@
     <string name="action_favourite">В избранное</string>
     <string name="post_sent">Опубликовано</string>
     <string name="action_new_post">Новый пост</string>
+    <string name="offline_save_feed">Сохранить для офлайна</string>
+    <string name="offline_saved">Сохранено постов: %1$s, изображений: %2$s</string>
+    <string name="offline_save_post">Сохранить пост</string>
 </resources>
