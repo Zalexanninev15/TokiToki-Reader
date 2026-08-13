@@ -87,4 +87,19 @@
     <string name="filter_no_reposts">ブースト以外</string>
     <string name="profile_title">プロフィール</string>
     <string name="profile_no_posts">表示できる投稿がありません</string>
+    <string name="compose_new">新規投稿</string>
+    <string name="compose_reply_to">%1$s への返信</string>
+    <string name="compose_quote">引用</string>
+    <string name="compose_send">送信</string>
+    <string name="compose_cw">閲覧注意</string>
+    <string name="compose_text">いま何してる？</string>
+    <string name="visibility_public">公開</string>
+    <string name="visibility_unlisted">ホーム</string>
+    <string name="visibility_followers">フォロワー</string>
+    <string name="visibility_direct">ダイレクト</string>
+    <string name="action_reply">返信</string>
+    <string name="action_boost">ブースト</string>
+    <string name="action_favourite">お気に入り</string>
+    <string name="post_sent">投稿しました</string>
+    <string name="action_new_post">新規投稿</string>
 </resources>

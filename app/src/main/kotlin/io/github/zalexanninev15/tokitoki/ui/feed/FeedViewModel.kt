@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import io.github.zalexanninev15.tokitoki.data.db.AccountEntity
 import io.github.zalexanninev15.tokitoki.data.repo.FeedRepository
+import io.github.zalexanninev15.tokitoki.data.repo.PostActionsRepository
 import io.github.zalexanninev15.tokitoki.domain.model.FeedItem
 import io.github.zalexanninev15.tokitoki.domain.model.FeedItemId
 import io.github.zalexanninev15.tokitoki.domain.readsync.MonotonicClock
@@ -56,7 +57,10 @@ data class FeedUiState(
 )
 
 @OptIn(FlowPreview::class, kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-class FeedViewModel(private val repository: FeedRepository) : ViewModel() {
+class FeedViewModel(
+    private val repository: FeedRepository,
+    private val actions: PostActionsRepository? = null,
+) : ViewModel() {
 
     private val tabIndex = MutableStateFlow(0)
     private val filter = MutableStateFlow(FeedFilter())
@@ -174,6 +178,31 @@ class FeedViewModel(private val repository: FeedRepository) : ViewModel() {
     private fun AccountEntity.localPart(): String =
         handle.removePrefix("@").substringBefore('@')
 
+    fun favourite(item: FeedItem) {
+        val current = item.interactions ?: return
+        val repo = actions ?: return
+        viewModelScope.launch {
+            val result = repo.toggleReaction(item.id, current.hasReacted)
+            // The server is the source of truth for the new state, and a refresh is the
+            // only way to learn it: neither API returns a usable delta for the timeline.
+            result.fold(
+                onSuccess = { refresh() },
+                onFailure = { error.value = it.message },
+            )
+        }
+    }
+
+    fun boost(item: FeedItem) {
+        val current = item.interactions ?: return
+        val repo = actions ?: return
+        viewModelScope.launch {
+            repo.toggleBoost(item.id, current.boosted).fold(
+                onSuccess = { refresh() },
+                onFailure = { error.value = it.message },
+            )
+        }
+    }
+
     fun updateQuery(value: String) {
         filter.value = filter.value.copy(query = value)
     }
@@ -221,9 +250,12 @@ class FeedViewModel(private val repository: FeedRepository) : ViewModel() {
         }
     }
 
-    class Factory(private val repository: FeedRepository) : ViewModelProvider.Factory {
+    class Factory(
+        private val repository: FeedRepository,
+        private val actions: PostActionsRepository? = null,
+    ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            FeedViewModel(repository) as T
+            FeedViewModel(repository, actions) as T
     }
 }

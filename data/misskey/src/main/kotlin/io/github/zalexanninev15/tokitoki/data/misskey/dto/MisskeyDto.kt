@@ -53,6 +53,10 @@ data class NoteDto(
     val uri: String? = null,
     val url: String? = null,
     val visibility: String = "public",
+    val myReaction: String? = null,
+    val reactions: Map<String, Int> = emptyMap(),
+    val renoteCount: Int = 0,
+    val repliesCount: Int = 0,
 ) {
     /**
      * Misskey overloads one field for two concepts: a renote with no body of its own is a
@@ -122,3 +126,22 @@ data class UserNotesRequest(
     val withReplies: Boolean = false,
     val untilId: String? = null,
 )
+
+@Serializable
+data class CreateNoteRequest(
+    val i: String,
+    val text: String? = null,
+    val cw: String? = null,
+    val replyId: String? = null,
+    val renoteId: String? = null,
+    val visibility: String = "public",
+)
+
+@Serializable
+data class CreateNoteResponse(val createdNote: NoteDto? = null)
+
+@Serializable
+data class ReactionRequest(val i: String, val noteId: String, val reaction: String)
+
+@Serializable
+data class NoteIdRequest(val i: String, val noteId: String)

@@ -9,6 +9,7 @@ import io.github.zalexanninev15.tokitoki.domain.model.FeedItem
 import io.github.zalexanninev15.tokitoki.domain.model.FeedItemId
 import io.github.zalexanninev15.tokitoki.domain.model.MediaAttachment
 import io.github.zalexanninev15.tokitoki.domain.model.MediaKind
+import io.github.zalexanninev15.tokitoki.domain.model.PostInteractions
 import io.github.zalexanninev15.tokitoki.domain.model.SourceKind
 import java.time.Instant
 import java.time.format.DateTimeParseException
@@ -43,6 +44,16 @@ class MastodonPostMapper(
             quoted = body.quote?.let { map(it) },
             reposted = boosted?.let { map(it) },
             repostedBy = boosted?.let { mapAuthor(dto.account) },
+            // Read off the boost wrapper, not the boosted post: favouriting a boost in
+            // Mastodon acts on the original, and the flags live on the outer status.
+            interactions = PostInteractions(
+                favourited = dto.favourited,
+                boosted = dto.reblogged,
+                favouriteCount = body.favouritesCount,
+                boostCount = body.reblogsCount,
+                replyCount = body.repliesCount,
+                myReaction = if (dto.favourited) "\u2b50" else null,
+            ),
         )
     }
 

@@ -15,7 +15,8 @@ import java.util.UUID
 
 private const val REDIRECT_URI = "tokitoki://auth/callback"
 private const val CLIENT_NAME = "TokiToki Reader"
-private const val MASTODON_SCOPES = "read:statuses read:accounts read:notifications write:statuses"
+private const val MASTODON_SCOPES =
+    "read:statuses read:accounts read:notifications write:statuses write:favourites"
 
 /**
  * Sign-in for both fediverse services.

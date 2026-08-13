@@ -128,6 +128,8 @@ data class FeedItem(
     /** Set for a boost/renote/forward that carries no commentary of its own. */
     val reposted: FeedItem? = null,
     val repostedBy: Author? = null,
+    /** Null when the source has no notion of favourites or boosts. */
+    val interactions: PostInteractions? = null,
 ) {
     val hasMedia: Boolean get() = media.isNotEmpty() || reposted?.media?.isNotEmpty() == true
 

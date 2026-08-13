@@ -5,6 +5,7 @@ import io.github.zalexanninev15.tokitoki.domain.model.FeedItem
 import io.github.zalexanninev15.tokitoki.domain.model.FeedItemId
 import io.github.zalexanninev15.tokitoki.domain.model.MediaAttachment
 import io.github.zalexanninev15.tokitoki.domain.model.MediaKind
+import io.github.zalexanninev15.tokitoki.domain.model.PostInteractions
 import io.github.zalexanninev15.tokitoki.domain.model.RichText
 import io.github.zalexanninev15.tokitoki.domain.model.SourceKind
 import io.github.zalexanninev15.tokitoki.domain.model.SpanKind
@@ -68,6 +69,12 @@ fun FeedItem.toEntity(): FeedItemEntity {
         contentWarning = body.contentWarning,
         canonicalUrl = body.canonicalUrl,
         repostedByName = repostedBy?.displayName,
+        favourited = interactions?.favourited ?: false,
+        boosted = interactions?.boosted ?: false,
+        favouriteCount = interactions?.favouriteCount ?: 0,
+        boostCount = interactions?.boostCount ?: 0,
+        replyCount = interactions?.replyCount ?: 0,
+        myReaction = interactions?.myReaction,
     )
 }
 
@@ -106,5 +113,19 @@ fun FeedItemEntity.toDomain(): FeedItem {
         contentWarning = contentWarning,
         canonicalUrl = canonicalUrl,
         repostedBy = repostedByName?.let { Author("", it, it, null) },
+        // Telegram messages carry no interactions; a cached row with all-zero counters
+        // and no reaction is how that absence is represented.
+        interactions = if (source == SourceKind.TELEGRAM.name) {
+            null
+        } else {
+            PostInteractions(
+                favourited = favourited,
+                boosted = boosted,
+                favouriteCount = favouriteCount,
+                boostCount = boostCount,
+                replyCount = replyCount,
+                myReaction = myReaction,
+            )
+        },
     )
 }

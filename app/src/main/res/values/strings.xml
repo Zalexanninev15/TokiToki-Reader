@@ -87,4 +87,19 @@
     <string name="filter_no_reposts">No boosts</string>
     <string name="profile_title">Profile</string>
     <string name="profile_no_posts">No posts to show</string>
+    <string name="compose_new">New post</string>
+    <string name="compose_reply_to">Reply to %1$s</string>
+    <string name="compose_quote">Quote</string>
+    <string name="compose_send">Send</string>
+    <string name="compose_cw">Content warning</string>
+    <string name="compose_text">What's on your mind?</string>
+    <string name="visibility_public">Public</string>
+    <string name="visibility_unlisted">Unlisted</string>
+    <string name="visibility_followers">Followers</string>
+    <string name="visibility_direct">Direct</string>
+    <string name="action_reply">Reply</string>
+    <string name="action_boost">Boost</string>
+    <string name="action_favourite">Favourite</string>
+    <string name="post_sent">Posted</string>
+    <string name="action_new_post">New post</string>
 </resources>

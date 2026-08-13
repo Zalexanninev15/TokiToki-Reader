@@ -39,6 +39,12 @@ data class FeedItemEntity(
     val contentWarning: String?,
     val canonicalUrl: String?,
     val repostedByName: String?,
+    val favourited: Boolean = false,
+    val boosted: Boolean = false,
+    val favouriteCount: Int = 0,
+    val boostCount: Int = 0,
+    val replyCount: Int = 0,
+    val myReaction: String? = null,
     @ColumnInfo(defaultValue = "0") val locallyRead: Boolean = false,
     @ColumnInfo(defaultValue = "0") val remoteConfirmed: Boolean = false,
 )

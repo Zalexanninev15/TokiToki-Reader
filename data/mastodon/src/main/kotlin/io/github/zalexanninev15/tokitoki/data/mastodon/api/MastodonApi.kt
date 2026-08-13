@@ -80,6 +80,46 @@ interface MastodonApi {
         @Url url: String,
     ): Response<List<StatusDto>>
 
+    /**
+     * Publishes a status. `Idempotency-Key` is what stops a retried request from posting
+     * twice — Mastodon keeps the key for an hour and returns the original status instead.
+     */
+    @FormUrlEncoded
+    @POST("api/v1/statuses")
+    suspend fun postStatus(
+        @Header("Authorization") bearer: String,
+        @Header("Idempotency-Key") idempotencyKey: String,
+        @Field("status") status: String,
+        @Field("in_reply_to_id") inReplyToId: String? = null,
+        @Field("spoiler_text") spoilerText: String? = null,
+        @Field("visibility") visibility: String = "public",
+    ): StatusDto
+
+    /** Requires the `write:favourites` scope, which is separate from `write:statuses`. */
+    @POST("api/v1/statuses/{id}/favourite")
+    suspend fun favourite(
+        @Header("Authorization") bearer: String,
+        @Path("id") statusId: String,
+    ): StatusDto
+
+    @POST("api/v1/statuses/{id}/unfavourite")
+    suspend fun unfavourite(
+        @Header("Authorization") bearer: String,
+        @Path("id") statusId: String,
+    ): StatusDto
+
+    @POST("api/v1/statuses/{id}/reblog")
+    suspend fun reblog(
+        @Header("Authorization") bearer: String,
+        @Path("id") statusId: String,
+    ): StatusDto
+
+    @POST("api/v1/statuses/{id}/unreblog")
+    suspend fun unreblog(
+        @Header("Authorization") bearer: String,
+        @Path("id") statusId: String,
+    ): StatusDto
+
     @GET("api/v1/accounts/{id}")
     suspend fun account(
         @Header("Authorization") bearer: String,

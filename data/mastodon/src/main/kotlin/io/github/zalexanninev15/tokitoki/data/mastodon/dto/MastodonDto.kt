@@ -62,6 +62,11 @@ data class StatusDto(
     @SerialName("media_attachments") val mediaAttachments: List<MediaAttachmentDto> = emptyList(),
     /** Present on Akkoma/Pleroma and on Mastodon builds with quote support. */
     val quote: StatusDto? = null,
+    val favourited: Boolean = false,
+    val reblogged: Boolean = false,
+    @SerialName("favourites_count") val favouritesCount: Int = 0,
+    @SerialName("reblogs_count") val reblogsCount: Int = 0,
+    @SerialName("replies_count") val repliesCount: Int = 0,
 )
 
 /**

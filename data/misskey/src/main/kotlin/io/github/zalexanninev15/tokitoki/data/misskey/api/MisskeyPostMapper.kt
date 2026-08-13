@@ -9,6 +9,7 @@ import io.github.zalexanninev15.tokitoki.domain.model.FeedItem
 import io.github.zalexanninev15.tokitoki.domain.model.FeedItemId
 import io.github.zalexanninev15.tokitoki.domain.model.MediaAttachment
 import io.github.zalexanninev15.tokitoki.domain.model.MediaKind
+import io.github.zalexanninev15.tokitoki.domain.model.PostInteractions
 import io.github.zalexanninev15.tokitoki.domain.model.SourceKind
 import java.time.Instant
 import java.time.format.DateTimeParseException
@@ -34,6 +35,16 @@ class MisskeyPostMapper(
             quoted = if (dto.isQuote) dto.renote?.let { map(it) } else null,
             reposted = boosted?.let { map(it) },
             repostedBy = boosted?.let { mapAuthor(dto.user) },
+            interactions = PostInteractions(
+                favourited = dto.myReaction != null,
+                // Misskey has no "did I renote this" flag on the note itself; renoting
+                // twice creates two renotes, so the button stays a plain action.
+                boosted = false,
+                favouriteCount = body.reactions.values.sum(),
+                boostCount = body.renoteCount,
+                replyCount = body.repliesCount,
+                myReaction = dto.myReaction,
+            ),
         )
     }
 

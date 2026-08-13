@@ -11,11 +11,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -63,9 +65,11 @@ fun FeedScreen(
     onOpenFollows: (String) -> Unit = {},
     onOpenAbout: () -> Unit = {},
     onOpenProfile: (String, String) -> Unit = { _, _ -> },
+    onCompose: (String) -> Unit = {},
+    onReply: (String, String, String) -> Unit = { _, _, _ -> },
 ) {
     val viewModel: FeedViewModel = viewModel(
-        factory = FeedViewModel.Factory(container.feedRepository),
+        factory = FeedViewModel.Factory(container.feedRepository, container.postActionsRepository),
     )
     val followsLabel = stringResource(R.string.action_follows)
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -85,6 +89,17 @@ fun FeedScreen(
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHost) },
+        floatingActionButton = {
+            // Posts go to the account whose tab is open; on the merged tab there is no
+            // unambiguous author, so it falls back to the first connected account.
+            val composeAccount = state.tabs.getOrNull(state.selectedTabIndex)?.accountLocalId
+                ?: state.tabs.firstOrNull { it.accountLocalId != null }?.accountLocalId
+            if (composeAccount != null) {
+                FloatingActionButton(onClick = { onCompose(composeAccount) }) {
+                    Icon(Icons.Default.Edit, stringResource(R.string.action_new_post))
+                }
+            }
+        },
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.app_name)) },
@@ -221,6 +236,15 @@ fun FeedScreen(
                                 },
                                 onOpenImage = onOpenImage,
                                 onOpenProfile = onOpenProfile,
+                                onReply = {
+                                    onReply(
+                                        item.id.accountLocalId,
+                                        item.id.remoteId,
+                                        item.author.handle,
+                                    )
+                                },
+                                onBoost = { viewModel.boost(item) },
+                                onFavourite = { viewModel.favourite(item) },
                             )
                         }
 

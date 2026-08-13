@@ -1,6 +1,10 @@
 package io.github.zalexanninev15.tokitoki.data.misskey.api
 
 import io.github.zalexanninev15.tokitoki.data.misskey.dto.AntennaDto
+import io.github.zalexanninev15.tokitoki.data.misskey.dto.CreateNoteRequest
+import io.github.zalexanninev15.tokitoki.data.misskey.dto.CreateNoteResponse
+import io.github.zalexanninev15.tokitoki.data.misskey.dto.NoteIdRequest
+import io.github.zalexanninev15.tokitoki.data.misskey.dto.ReactionRequest
 import io.github.zalexanninev15.tokitoki.data.misskey.dto.FollowingDto
 import io.github.zalexanninev15.tokitoki.data.misskey.dto.FollowingRequest
 import io.github.zalexanninev15.tokitoki.data.misskey.dto.AntennaNotesRequest
@@ -58,6 +62,23 @@ interface MisskeyApi {
      */
     @POST("api/i/read-all-unread-notes")
     suspend fun readAllUnreadNotes(@Body request: NotificationsReadRequest): Response<Unit>
+
+    /** Creates a note. A renote is the same call with `renoteId` and no text. */
+    @POST("api/notes/create")
+    suspend fun createNote(@Body request: CreateNoteRequest): CreateNoteResponse
+
+    /**
+     * Misskey reactions are emoji, not a single star. The default here is the thumbs-up
+     * that every instance accepts; custom instance emoji would need the picker.
+     */
+    @POST("api/notes/reactions/create")
+    suspend fun createReaction(@Body request: ReactionRequest): Response<Unit>
+
+    @POST("api/notes/reactions/delete")
+    suspend fun deleteReaction(@Body request: NoteIdRequest): Response<Unit>
+
+    @POST("api/notes/delete")
+    suspend fun deleteNote(@Body request: NoteIdRequest): Response<Unit>
 
     @POST("api/users/show")
     suspend fun userShow(@Body request: UserShowRequest): MisskeyUserDto

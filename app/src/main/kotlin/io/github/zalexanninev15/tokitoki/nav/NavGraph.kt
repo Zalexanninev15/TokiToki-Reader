@@ -19,6 +19,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.zalexanninev15.tokitoki.ui.feed.FeedScreen
 import io.github.zalexanninev15.tokitoki.ui.follows.FollowsScreen
 import io.github.zalexanninev15.tokitoki.ui.follows.FollowsViewModel
+import io.github.zalexanninev15.tokitoki.domain.model.ComposeTarget
+import io.github.zalexanninev15.tokitoki.ui.compose.ComposeScreen
+import io.github.zalexanninev15.tokitoki.ui.compose.ComposeViewModel
 import io.github.zalexanninev15.tokitoki.ui.profile.ProfileScreen
 import io.github.zalexanninev15.tokitoki.util.copyToClipboard
 import io.github.zalexanninev15.tokitoki.ui.profile.ProfileViewModel
@@ -31,6 +34,11 @@ object Routes {
     const val ADD_ACCOUNT = "accounts/add"
     const val SETTINGS = "settings"
     const val ABOUT = "about"
+    const val COMPOSE = "compose/{accountId}?replyTo={replyTo}&handle={handle}"
+
+    fun compose(accountId: String, replyTo: String? = null, handle: String? = null): String =
+        "compose/${Uri.encode(accountId)}" +
+            "?replyTo=${Uri.encode(replyTo.orEmpty())}&handle=${Uri.encode(handle.orEmpty())}"
     const val IMAGE = "image/{url}"
     const val FOLLOWS = "follows/{accountId}"
     const val PROFILE = "profile/{accountId}/{userId}"
@@ -73,6 +81,10 @@ fun TokiTokiNavHost(
                 onOpenFollows = { id -> navController.navigate(Routes.follows(id)) },
                 onOpenProfile = { accountId, userId ->
                     navController.navigate(Routes.profile(accountId, userId))
+                },
+                onCompose = { accountId -> navController.navigate(Routes.compose(accountId)) },
+                onReply = { accountId, postId, handle ->
+                    navController.navigate(Routes.compose(accountId, postId, handle))
                 },
                 onOpenImage = { url -> navController.navigate(Routes.image(url)) },
             )
@@ -137,6 +149,33 @@ fun TokiTokiNavHost(
                 },
                 onCopyLink = { url -> url?.let { context.copyToClipboard(it) } },
                 onOpenImage = { url -> navController.navigate(Routes.image(url)) },
+            )
+        }
+
+        composable(
+            route = Routes.COMPOSE,
+            arguments = listOf(
+                navArgument("accountId") { type = NavType.StringType },
+                navArgument("replyTo") { type = NavType.StringType; defaultValue = "" },
+                navArgument("handle") { type = NavType.StringType; defaultValue = "" },
+            ),
+        ) { entry ->
+            val accountId = Uri.decode(entry.arguments?.getString("accountId").orEmpty())
+            val replyTo = Uri.decode(entry.arguments?.getString("replyTo").orEmpty())
+            val handle = Uri.decode(entry.arguments?.getString("handle").orEmpty())
+            val target = if (replyTo.isBlank()) {
+                ComposeTarget.NewPost(accountId)
+            } else {
+                ComposeTarget.Reply(accountId, replyTo, handle)
+            }
+            val viewModel: ComposeViewModel = viewModel(
+                factory = ComposeViewModel.Factory(container.postActionsRepository, target),
+            )
+            ComposeScreen(
+                viewModel = viewModel,
+                target = target,
+                onBack = { navController.popBackStack() },
+                onSent = { navController.popBackStack() },
             )
         }
 

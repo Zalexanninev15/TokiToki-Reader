@@ -84,4 +84,19 @@
     <string name="filter_no_reposts">Без бустов</string>
     <string name="profile_title">Профиль</string>
     <string name="profile_no_posts">Постов нет</string>
+    <string name="compose_new">Новый пост</string>
+    <string name="compose_reply_to">Ответ %1$s</string>
+    <string name="compose_quote">Цитата</string>
+    <string name="compose_send">Отправить</string>
+    <string name="compose_cw">Предупреждение</string>
+    <string name="compose_text">О чём думаете?</string>
+    <string name="visibility_public">Публично</string>
+    <string name="visibility_unlisted">Без ленты</string>
+    <string name="visibility_followers">Подписчикам</string>
+    <string name="visibility_direct">Лично</string>
+    <string name="action_reply">Ответить</string>
+    <string name="action_boost">Бустнуть</string>
+    <string name="action_favourite">В избранное</string>
+    <string name="post_sent">Опубликовано</string>
+    <string name="action_new_post">Новый пост</string>
 </resources>

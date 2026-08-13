@@ -48,6 +48,9 @@ fun FeedItemCard(
     onOpenImage: (String) -> Unit,
     /** (accountLocalId, remoteUserId) — enough to load the profile through that account. */
     onOpenProfile: ((String, String) -> Unit)? = null,
+    onReply: (() -> Unit)? = null,
+    onBoost: (() -> Unit)? = null,
+    onFavourite: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     var contentWarningRevealed by remember(item.id.value) { mutableStateOf(false) }
@@ -185,6 +188,18 @@ fun FeedItemCard(
                         modifier = Modifier.padding(start = 6.dp),
                     )
                 }
+            }
+
+            // Only when the source supports it and the screen supplied handlers: the
+            // profile view reuses this card in read-only mode.
+            val interactions = item.interactions
+            if (interactions != null && onReply != null && onBoost != null && onFavourite != null) {
+                PostActionsRow(
+                    interactions = interactions,
+                    onReply = onReply,
+                    onBoost = onBoost,
+                    onFavourite = onFavourite,
+                )
             }
         }
     }
