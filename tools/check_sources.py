@@ -10,6 +10,9 @@ minutes, and a mangled import wastes all of it.
   3. project types used without an import
   4. R.string.* referenced but missing from the default locale
   5. literal "${'$'}" left in source (a template that leaked as text)
+  6. common Compose/coroutine functions used without their import — these start with a
+     lowercase letter, so the checks above skip them, and a missing one is exactly what
+     a scripted import insertion gets wrong
 
 Exit code 1 on any finding.
 """
@@ -20,6 +23,30 @@ import collections
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 PKG = "io.github.zalexanninev15.tokitoki"
+
+# Function imports that are easy to forget and impossible to infer from the name alone.
+# Value is the package the symbol must be imported from.
+FUNCTION_IMPORTS = {
+    "remember": "androidx.compose.runtime",
+    "rememberCoroutineScope": "androidx.compose.runtime",
+    "rememberSaveable": "androidx.compose.runtime.saveable",
+    "mutableStateOf": "androidx.compose.runtime",
+    "mutableFloatStateOf": "androidx.compose.runtime",
+    "mutableIntStateOf": "androidx.compose.runtime",
+    "derivedStateOf": "androidx.compose.runtime",
+    "snapshotFlow": "androidx.compose.runtime",
+    "rememberLazyListState": "androidx.compose.foundation.lazy",
+    "rememberPagerState": "androidx.compose.foundation.pager",
+    "rememberScrollState": "androidx.compose.foundation",
+    "collectAsStateWithLifecycle": "androidx.lifecycle.compose",
+    "stringResource": "androidx.compose.ui.res",
+    "painterResource": "androidx.compose.ui.res",
+    "viewModel": "androidx.lifecycle.viewmodel.compose",
+    "verticalScroll": "androidx.compose.foundation",
+    "combinedClickable": "androidx.compose.foundation",
+    "clickable": "androidx.compose.foundation",
+    "toUri": "androidx.core.net",
+}
 
 def kotlin_sources():
     for root in ("app/src", "domain/src", "data"):
@@ -73,6 +100,20 @@ def main() -> int:
                 continue
             if re.search(r"(?<![\w.])" + re.escape(name) + r"(?![\w])", code):
                 problems.append(f"{rel}: {name} used without an import")
+
+        for symbol, package in FUNCTION_IMPORTS.items():
+            if not re.search(r"(?<![\w.])" + symbol + r"\s*[({<]", code):
+                continue
+            expected = f"{package}.{symbol}"
+            if expected in {fq for fq, _ in imports}:
+                continue
+            if f"{package}.*" in {fq for fq, _ in imports}:
+                continue
+            if package == PKG or symbol in pkg_types.get(package, ()):  # defined locally
+                continue
+            if re.search(r"^\s*(?:private |internal )?fun\s+" + symbol + r"\b", text, re.M):
+                continue
+            problems.append(f"{rel}: {symbol}() used without importing {expected}")
 
         if "${'$'}" in text:
             problems.append(f"{rel}: literal \"${{'$'}}\" left in source")
