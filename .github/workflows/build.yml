@@ -22,6 +22,11 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      # Seconds, and it catches the scripted-edit damage that would otherwise burn a
+      # full Android build to discover.
+      - name: Source checks
+        run: python3 tools/check_sources.py
+
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 

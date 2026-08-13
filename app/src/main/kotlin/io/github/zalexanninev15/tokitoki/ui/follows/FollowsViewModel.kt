@@ -1,14 +1,11 @@
 package io.github.zalexanninev15.tokitoki.ui.follows
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import androidx.lifecycle.ViewModel
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.LocaleProvider
-import androidx.lifecycle.viewModelScope
 import io.github.zalexanninev15.tokitoki.data.repo.FollowsRepository
 import io.github.zalexanninev15.tokitoki.domain.model.FollowedAccount
 import kotlinx.coroutines.flow.MutableStateFlow

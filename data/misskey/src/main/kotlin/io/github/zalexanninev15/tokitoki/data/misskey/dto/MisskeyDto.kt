@@ -1,6 +1,5 @@
 package io.github.zalexanninev15.tokitoki.data.misskey.dto
 
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
