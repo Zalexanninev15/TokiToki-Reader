@@ -10,7 +10,9 @@ minutes, and a mangled import wastes all of it.
   3. project types used without an import
   4. R.string.* referenced but missing from the default locale
   5. literal "${'$'}" left in source (a template that leaked as text)
-  6. common Compose/coroutine functions used without their import — these start with a
+  6. project top-level functions used from another file without an import, and any use
+     of a private top-level function outside the file that declares it
+  7. common Compose/coroutine functions used without their import — these start with a
      lowercase letter, so the checks above skip them, and a missing one is exactly what
      a scripted import insertion gets wrong
 
@@ -56,6 +58,8 @@ def main() -> int:
     problems = []
 
     declared, pkg_types = {}, collections.defaultdict(set)
+    # name -> (package, is_private, declaring file)
+    top_level_funs = {}
     for path in kotlin_sources():
         text = path.read_text(encoding="utf-8")
         package = re.search(r"^package\s+([\w.]+)", text, re.M)
@@ -67,6 +71,13 @@ def main() -> int:
             r"(?:class|interface|object)\s+(\w+)", text, re.M):
             declared.setdefault(match.group(1), set()).add(f"{package}.{match.group(1)}")
             pkg_types[package].add(match.group(1))
+
+        for match in re.finditer(
+            r"^(private |internal |public )?fun\s+(?:<[^>]+>\s*)?(?:[\w.]+\.)?(\w+)\s*\(",
+            text, re.M):
+            modifier, name = match.group(1), match.group(2)
+            top_level_funs.setdefault(name, []).append(
+                (package, modifier == "private ", str(path), "/src/test/" in str(path)))
 
     for path in kotlin_sources():
         text = path.read_text(encoding="utf-8")
@@ -100,6 +111,30 @@ def main() -> int:
                 continue
             if re.search(r"(?<![\w.])" + re.escape(name) + r"(?![\w])", code):
                 problems.append(f"{rel}: {name} used without an import")
+
+        in_test = "/src/test/" in str(path)
+        for name, declarations in top_level_funs.items():
+            # Skip when this very file declares its own version of the name.
+            if any(origin == str(path) for _, _, origin, _ in declarations):
+                continue
+            # Test sources are invisible from main; a name collision there says nothing.
+            visible = [d for d in declarations if in_test or not d[3]]
+            if not visible:
+                continue
+            fun_package, is_private, origin, _ = visible[0]
+            if fun_package == package:
+                continue
+            # Extension functions are called as `receiver.name(...)`, so a lookbehind
+            # that forbids a preceding dot would miss exactly the case this check exists
+            # for. Only the identifier boundary matters.
+            if not re.search(r"(?<![\w])" + re.escape(name) + r"\s*[({]", code):
+                continue
+            if is_private:
+                problems.append(
+                    f"{rel}: {name}() is private to {pathlib.Path(origin).name}")
+            elif f"{fun_package}.{name}" not in {fq for fq, _ in imports} and \
+                    f"{fun_package}.*" not in {fq for fq, _ in imports}:
+                problems.append(f"{rel}: {name}() used without importing {fun_package}.{name}")
 
         for symbol, package in FUNCTION_IMPORTS.items():
             if not re.search(r"(?<![\w.])" + symbol + r"\s*[({<]", code):

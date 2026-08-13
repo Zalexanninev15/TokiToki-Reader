@@ -20,6 +20,7 @@ import io.github.zalexanninev15.tokitoki.ui.feed.FeedScreen
 import io.github.zalexanninev15.tokitoki.ui.follows.FollowsScreen
 import io.github.zalexanninev15.tokitoki.ui.follows.FollowsViewModel
 import io.github.zalexanninev15.tokitoki.ui.profile.ProfileScreen
+import io.github.zalexanninev15.tokitoki.util.copyToClipboard
 import io.github.zalexanninev15.tokitoki.ui.profile.ProfileViewModel
 import io.github.zalexanninev15.tokitoki.ui.media.ImageViewerScreen
 import io.github.zalexanninev15.tokitoki.ui.settings.SettingsScreen

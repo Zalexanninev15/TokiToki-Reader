@@ -1,8 +1,5 @@
 package io.github.zalexanninev15.tokitoki.ui.feed
 
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -49,10 +46,11 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.browser.customtabs.CustomTabsIntent
 import io.github.zalexanninev15.tokitoki.AppContainer
 import io.github.zalexanninev15.tokitoki.R
 import io.github.zalexanninev15.tokitoki.ui.components.FeedItemCard
+import io.github.zalexanninev15.tokitoki.util.copyToClipboard
+import io.github.zalexanninev15.tokitoki.util.openInCustomTab
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -275,13 +273,4 @@ private fun EmptyOrError(
     }
 }
 
-private fun Context.openInCustomTab(url: String) {
-    runCatching {
-        CustomTabsIntent.Builder().setShowTitle(true).build().launchUrl(this, url.toUri())
-    }
-}
 
-private fun Context.copyToClipboard(url: String) {
-    val manager = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-    manager.setPrimaryClip(ClipData.newPlainText("post", url))
-}
