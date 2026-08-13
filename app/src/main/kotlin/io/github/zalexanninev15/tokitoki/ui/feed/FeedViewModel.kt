@@ -46,6 +46,8 @@ data class FeedUiState(
     val selectedTabIndex: Int = 0,
     /** Item id -> "misskey · @me@host", shown next to the author handle. */
     val sourceLabels: Map<String, String> = emptyMap(),
+    val filter: FeedFilter = FeedFilter(),
+    val searchVisible: Boolean = false,
     val readIds: Set<String> = emptySet(),
     val isRefreshing: Boolean = false,
     val isLoadingMore: Boolean = false,
@@ -57,6 +59,8 @@ data class FeedUiState(
 class FeedViewModel(private val repository: FeedRepository) : ViewModel() {
 
     private val tabIndex = MutableStateFlow(0)
+    private val filter = MutableStateFlow(FeedFilter())
+    private val searchVisible = MutableStateFlow(false)
     private val refreshing = MutableStateFlow(false)
     private val loadingMore = MutableStateFlow(false)
     private val error = MutableStateFlow<String?>(null)
@@ -77,13 +81,24 @@ class FeedViewModel(private val repository: FeedRepository) : ViewModel() {
 
     // combine, not `map` reading `.value`: a StateFlow read inside map does not make the
     // outer flow re-emit, so switching tabs used to leave the previous list on screen.
+    private val flags = combine(refreshing, loadingMore, error, searchVisible) {
+            isRefreshing, isLoadingMore, errorMessage, isSearchVisible ->
+        Flags(isRefreshing, isLoadingMore, errorMessage, isSearchVisible)
+    }
+
+    private data class Flags(
+        val refreshing: Boolean,
+        val loadingMore: Boolean,
+        val error: String?,
+        val searchVisible: Boolean,
+    )
+
     val uiState: StateFlow<FeedUiState> = combine(
         feed,
         tabIndex,
-        refreshing,
-        loadingMore,
-        error,
-    ) { (all, items), index, isRefreshing, isLoadingMore, errorMessage ->
+        filter,
+        flags,
+    ) { (all, items), index, currentFilter, flagState ->
         val enabled = all.filter { it.enabled }
         val tabs = buildList {
             add(FeedTab(accountLocalId = null, title = FeedTab.ALL_TITLE))
@@ -94,17 +109,22 @@ class FeedViewModel(private val repository: FeedRepository) : ViewModel() {
 
         val labels = enabled.associate { account -> account.localId to account.sourceLabel() }
 
+        val visible = items.filter {
+            current == null || current.isAll || it.id.accountLocalId == current.accountLocalId
+        }
+
         FeedUiState(
-            items = items.filter { current == null || current.isAll ||
-                it.id.accountLocalId == current.accountLocalId },
+            items = currentFilter.apply(visible, emptySet()),
             tabs = tabs,
             selectedTabIndex = safeIndex,
             sourceLabels = labels,
+            filter = currentFilter,
+            searchVisible = flagState.searchVisible,
             readIds = emptySet(),
-            isRefreshing = isRefreshing,
-            isLoadingMore = isLoadingMore,
+            isRefreshing = flagState.refreshing,
+            isLoadingMore = flagState.loadingMore,
             hasAccounts = all.isNotEmpty(),
-            errorMessage = errorMessage,
+            errorMessage = flagState.error,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), FeedUiState())
 
@@ -153,6 +173,27 @@ class FeedViewModel(private val repository: FeedRepository) : ViewModel() {
 
     private fun AccountEntity.localPart(): String =
         handle.removePrefix("@").substringBefore('@')
+
+    fun updateQuery(value: String) {
+        filter.value = filter.value.copy(query = value)
+    }
+
+    fun toggleFilter(
+        media: Boolean = filter.value.onlyWithMedia,
+        unread: Boolean = filter.value.onlyUnread,
+        reposts: Boolean = filter.value.hideReposts,
+    ) {
+        filter.value = filter.value.copy(
+            onlyWithMedia = media,
+            onlyUnread = unread,
+            hideReposts = reposts,
+        )
+    }
+
+    fun setSearchVisible(visible: Boolean) {
+        searchVisible.value = visible
+        if (!visible) filter.value = FeedFilter()
+    }
 
     fun selectTab(index: Int) {
         tabIndex.value = index

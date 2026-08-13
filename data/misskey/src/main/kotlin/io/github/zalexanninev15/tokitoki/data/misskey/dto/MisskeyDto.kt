@@ -110,3 +110,15 @@ data class FollowingDto(
     val followeeId: String? = null,
     val followee: MisskeyUserDto? = null,
 )
+
+@Serializable
+data class UserShowRequest(val i: String, val userId: String)
+
+@Serializable
+data class UserNotesRequest(
+    val i: String,
+    val userId: String,
+    val limit: Int = 20,
+    val withReplies: Boolean = false,
+    val untilId: String? = null,
+)

@@ -77,4 +77,11 @@
     <string name="language_ja">Японский</string>
     <string name="image_unsupported">Этот файл нельзя показать здесь — возможно, это видео или неподдерживаемый формат.</string>
     <string name="open_link">Открыть</string>
+    <string name="search">Поиск</string>
+    <string name="search_placeholder">Поиск по ленте</string>
+    <string name="filter_media">С медиа</string>
+    <string name="filter_unread">Непрочитанные</string>
+    <string name="filter_no_reposts">Без бустов</string>
+    <string name="profile_title">Профиль</string>
+    <string name="profile_no_posts">Постов нет</string>
 </resources>

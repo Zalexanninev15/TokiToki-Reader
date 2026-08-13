@@ -46,6 +46,8 @@ fun FeedItemCard(
     onOpenLink: (String) -> Unit,
     onCopyLink: (String?) -> Unit,
     onOpenImage: (String) -> Unit,
+    /** (accountLocalId, remoteUserId) — enough to load the profile through that account. */
+    onOpenProfile: ((String, String) -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     var contentWarningRevealed by remember(item.id.value) { mutableStateOf(false) }
@@ -80,7 +82,18 @@ fun FeedItemCard(
                 AsyncImage(
                     model = item.author.avatarUrl,
                     contentDescription = stringResource(R.string.cd_avatar, item.author.displayName),
-                    modifier = Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)),
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .then(
+                            if (onOpenProfile != null) {
+                                Modifier.clickable {
+                                    onOpenProfile(item.id.accountLocalId, item.author.remoteId)
+                                }
+                            } else {
+                                Modifier
+                            },
+                        ),
                 )
                 Column(modifier = Modifier.weight(1f)) {
                     Text(

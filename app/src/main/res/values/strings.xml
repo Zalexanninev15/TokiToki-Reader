@@ -80,4 +80,11 @@
     <string name="language_ja">Japanese</string>
     <string name="image_unsupported">This file cannot be shown here — it may be a video or an unsupported format.</string>
     <string name="open_link">Open</string>
+    <string name="search">Search</string>
+    <string name="search_placeholder">Search the feed</string>
+    <string name="filter_media">With media</string>
+    <string name="filter_unread">Unread</string>
+    <string name="filter_no_reposts">No boosts</string>
+    <string name="profile_title">Profile</string>
+    <string name="profile_no_posts">No posts to show</string>
 </resources>

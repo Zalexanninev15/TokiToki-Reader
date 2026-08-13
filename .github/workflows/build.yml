@@ -57,7 +57,11 @@ jobs:
     name: Publish release
     runs-on: ubuntu-latest
     needs: apk
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    # Was pinned to main only, which silently skipped the job on a master-named
+    # default branch. Skipped jobs look like nothing happened, hence the missing release.
+    if: >-
+      github.event_name == 'push' &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -67,11 +71,11 @@ jobs:
       - name: Publish
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v0.1-alpha-${{ github.run_number }}
-          name: 0.1 alpha (build ${{ github.run_number }})
+          tag_name: v0.2-alpha-${{ github.run_number }}
+          name: 0.2 alpha (build ${{ github.run_number }})
           prerelease: true
           files: out/*.apk
           body: |
             Автоматическая сборка из `main`, коммит ${{ github.sha }}.
 
-            Это pre-alpha: Telegram не поддерживается, публикация и реакции не реализованы.
+            Alpha-сборка: Telegram не поддерживается, публикация и реакции не реализованы.

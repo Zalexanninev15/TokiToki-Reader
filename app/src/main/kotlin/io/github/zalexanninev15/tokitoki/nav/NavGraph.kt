@@ -19,6 +19,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.zalexanninev15.tokitoki.ui.feed.FeedScreen
 import io.github.zalexanninev15.tokitoki.ui.follows.FollowsScreen
 import io.github.zalexanninev15.tokitoki.ui.follows.FollowsViewModel
+import io.github.zalexanninev15.tokitoki.ui.profile.ProfileScreen
+import io.github.zalexanninev15.tokitoki.ui.profile.ProfileViewModel
 import io.github.zalexanninev15.tokitoki.ui.media.ImageViewerScreen
 import io.github.zalexanninev15.tokitoki.ui.settings.SettingsScreen
 
@@ -30,6 +32,10 @@ object Routes {
     const val ABOUT = "about"
     const val IMAGE = "image/{url}"
     const val FOLLOWS = "follows/{accountId}"
+    const val PROFILE = "profile/{accountId}/{userId}"
+
+    fun profile(accountId: String, userId: String): String =
+        "profile/${Uri.encode(accountId)}/${Uri.encode(userId)}"
 
     fun follows(accountId: String): String = "follows/${Uri.encode(accountId)}"
 
@@ -64,6 +70,9 @@ fun TokiTokiNavHost(
                 // Long-pressing a source tab jumps straight to that account's
                 // subscriptions, which is the shortcut requested for the feature.
                 onOpenFollows = { id -> navController.navigate(Routes.follows(id)) },
+                onOpenProfile = { accountId, userId ->
+                    navController.navigate(Routes.profile(accountId, userId))
+                },
                 onOpenImage = { url -> navController.navigate(Routes.image(url)) },
             )
         }
@@ -89,10 +98,7 @@ fun TokiTokiNavHost(
             FollowsScreen(
                 viewModel = viewModel,
                 onBack = { navController.popBackStack() },
-                onOpenProfile = { url ->
-                    CustomTabsIntent.Builder().setShowTitle(true).build()
-                        .launchUrl(context, url.toUri())
-                },
+                onOpenProfile = { userId -> navController.navigate(Routes.profile(accountId, userId)) },
             )
         }
 
@@ -105,6 +111,31 @@ fun TokiTokiNavHost(
                     navController.popBackStack(Routes.FEED, inclusive = false)
                 },
                 onBack = { navController.popBackStack() },
+            )
+        }
+
+        composable(
+            route = Routes.PROFILE,
+            arguments = listOf(
+                navArgument("accountId") { type = NavType.StringType },
+                navArgument("userId") { type = NavType.StringType },
+            ),
+        ) { entry ->
+            val context = LocalContext.current
+            val accountId = Uri.decode(entry.arguments?.getString("accountId").orEmpty())
+            val userId = Uri.decode(entry.arguments?.getString("userId").orEmpty())
+            val viewModel: ProfileViewModel = viewModel(
+                factory = ProfileViewModel.Factory(container.profileRepository, accountId, userId),
+            )
+            ProfileScreen(
+                viewModel = viewModel,
+                onBack = { navController.popBackStack() },
+                onOpenLink = { url ->
+                    CustomTabsIntent.Builder().setShowTitle(true).build()
+                        .launchUrl(context, url.toUri())
+                },
+                onCopyLink = { url -> url?.let { context.copyToClipboard(it) } },
+                onOpenImage = { url -> navController.navigate(Routes.image(url)) },
             )
         }
 

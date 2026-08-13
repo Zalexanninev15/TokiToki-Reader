@@ -10,6 +10,8 @@ import io.github.zalexanninev15.tokitoki.data.misskey.dto.MisskeyUserDto
 import io.github.zalexanninev15.tokitoki.data.misskey.dto.NodeInfoDto
 import io.github.zalexanninev15.tokitoki.data.misskey.dto.NoteDto
 import io.github.zalexanninev15.tokitoki.data.misskey.dto.NotificationsReadRequest
+import io.github.zalexanninev15.tokitoki.data.misskey.dto.UserNotesRequest
+import io.github.zalexanninev15.tokitoki.data.misskey.dto.UserShowRequest
 import io.github.zalexanninev15.tokitoki.data.misskey.dto.TimelineRequest
 import retrofit2.Response
 import retrofit2.http.Body
@@ -56,6 +58,13 @@ interface MisskeyApi {
      */
     @POST("api/i/read-all-unread-notes")
     suspend fun readAllUnreadNotes(@Body request: NotificationsReadRequest): Response<Unit>
+
+    @POST("api/users/show")
+    suspend fun userShow(@Body request: UserShowRequest): MisskeyUserDto
+
+    /** Recent notes by one user, used by the in-app profile view. */
+    @POST("api/users/notes")
+    suspend fun userNotes(@Body request: UserNotesRequest): List<NoteDto>
 
     /**
      * Accounts the user follows. Misskey wraps each entry, so the followee sits one level

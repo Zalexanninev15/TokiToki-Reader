@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -63,6 +64,7 @@ fun FeedScreen(
     onOpenImage: (String) -> Unit,
     onOpenFollows: (String) -> Unit = {},
     onOpenAbout: () -> Unit = {},
+    onOpenProfile: (String, String) -> Unit = { _, _ -> },
 ) {
     val viewModel: FeedViewModel = viewModel(
         factory = FeedViewModel.Factory(container.feedRepository),
@@ -92,6 +94,9 @@ fun FeedScreen(
                     IconButton(onClick = onOpenAccounts) {
                         Icon(Icons.Default.AccountCircle, stringResource(R.string.accounts))
                     }
+                    IconButton(onClick = { viewModel.setSearchVisible(!state.searchVisible) }) {
+                        Icon(Icons.Default.Search, stringResource(R.string.search))
+                    }
                     IconButton(onClick = onOpenAbout) {
                         Icon(Icons.Default.Info, stringResource(R.string.about_title))
                     }
@@ -103,6 +108,17 @@ fun FeedScreen(
         },
     ) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize()) {
+            if (state.searchVisible) {
+                FeedSearchBar(
+                    filter = state.filter,
+                    onQueryChange = viewModel::updateQuery,
+                    onToggleMedia = { viewModel.toggleFilter(media = it) },
+                    onToggleUnread = { viewModel.toggleFilter(unread = it) },
+                    onToggleReposts = { viewModel.toggleFilter(reposts = it) },
+                    onDismiss = { viewModel.setSearchVisible(false) },
+                )
+            }
+
             if (state.tabs.size > 1) {
                 ScrollableTabRow(
                     selectedTabIndex = pagerState.currentPage.coerceIn(
@@ -206,6 +222,7 @@ fun FeedScreen(
                                     }
                                 },
                                 onOpenImage = onOpenImage,
+                                onOpenProfile = onOpenProfile,
                             )
                         }
 

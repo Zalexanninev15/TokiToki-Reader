@@ -80,6 +80,21 @@ interface MastodonApi {
         @Url url: String,
     ): Response<List<StatusDto>>
 
+    @GET("api/v1/accounts/{id}")
+    suspend fun account(
+        @Header("Authorization") bearer: String,
+        @Path("id") accountId: String,
+    ): MastodonAccountDto
+
+    /** Recent posts by one account, used by the in-app profile view. */
+    @GET("api/v1/accounts/{id}/statuses")
+    suspend fun accountStatuses(
+        @Header("Authorization") bearer: String,
+        @Path("id") accountId: String,
+        @Query("limit") limit: Int = 20,
+        @Query("exclude_replies") excludeReplies: Boolean = true,
+    ): Response<List<StatusDto>>
+
     /**
      * Accounts the user follows. Paginated through the `Link` header like timelines;
      * `limit` is capped at 80 by the server regardless of what is asked for.

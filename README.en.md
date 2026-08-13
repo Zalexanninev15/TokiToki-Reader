@@ -1,7 +1,7 @@
 # TokiToki Reader
 
 ![platform](https://img.shields.io/badge/platform-Android_8.0%2B-3DDC84.svg?logo=android)
-![version](https://img.shields.io/badge/version-0.1_alpha-orange)
+![version](https://img.shields.io/badge/version-0.2_alpha-orange)
 ![license](https://img.shields.io/badge/license-MIT-blue)
 
 [Русский](README.md) · **English** · [日本語](README.ja.md)
@@ -9,7 +9,7 @@
 A reader for Mastodon and Misskey timelines in one app. A merged feed, a tab per account, and read-state pushed back to the server wherever that is possible at all.
 
 > [!WARNING]
-> Version 0.1 alpha. Plenty is missing and some of it is rough. Telegram is not supported yet.
+> Version 0.2 alpha. Plenty is missing and some of it is rough. Telegram is not supported yet.
 
 ## Features
 
@@ -20,6 +20,8 @@ A reader for Mastodon and Misskey timelines in one app. A merged feed, a tab per
 - Loads 10 posts at a time as you scroll
 - Local cache, so the feed opens without a connection
 - Content warnings, boosts, quotes, replies
+- Feed search and filters: with media, unread, no boosts
+- Author profiles open in-app — tap an avatar
 
 **Read state**
 - A post counts as read once it has actually been on screen, not when it was fetched
@@ -76,7 +78,7 @@ Pleroma, Akkoma and GoToSocial may not implement `markers`, in which case the ap
 
 ## Not implemented
 
-Telegram, posting and replies, reactions and boosts, feed search, in-app profile view, notifications, saving posts for offline.
+Telegram, posting and replies, reactions and boosts, notifications, saving posts for offline.
 
 ## Feedback
 

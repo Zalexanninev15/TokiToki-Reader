@@ -80,4 +80,11 @@
     <string name="language_ja">日本語</string>
     <string name="image_unsupported">このファイルはここでは表示できません。動画または未対応の形式の可能性があります。</string>
     <string name="open_link">開く</string>
+    <string name="search">検索</string>
+    <string name="search_placeholder">タイムラインを検索</string>
+    <string name="filter_media">メディアあり</string>
+    <string name="filter_unread">未読</string>
+    <string name="filter_no_reposts">ブースト以外</string>
+    <string name="profile_title">プロフィール</string>
+    <string name="profile_no_posts">表示できる投稿がありません</string>
 </resources>

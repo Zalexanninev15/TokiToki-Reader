@@ -50,6 +50,7 @@ import kotlinx.coroutines.launch
 fun FollowsScreen(
     viewModel: FollowsViewModel,
     onBack: () -> Unit,
+    /** Remote user id, opened in the in-app profile view. */
     onOpenProfile: (String) -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -125,7 +126,7 @@ fun FollowsScreen(
 
                 else -> LazyColumn(Modifier.fillMaxSize()) {
                     items(state.accounts, key = { "${it.source}:${it.remoteId}" }) { account ->
-                        FollowRow(account, onClick = { account.profileUrl?.let(onOpenProfile) })
+                        FollowRow(account, onClick = { onOpenProfile(account.remoteId) })
                         HorizontalDivider()
                     }
                 }
