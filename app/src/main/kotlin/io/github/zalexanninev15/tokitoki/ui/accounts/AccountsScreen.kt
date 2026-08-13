@@ -131,12 +131,17 @@ fun AccountsScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
 
-                        TextButton(
-                            onClick = {
-                                scope.launch { container.feedRepository.logout(account.localId) }
-                            },
-                        ) {
-                            Text(stringResource(R.string.log_out))
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            TextButton(onClick = { onOpenFollows(account.localId) }) {
+                                Text(stringResource(R.string.action_follows))
+                            }
+                            TextButton(
+                                onClick = {
+                                    scope.launch { container.feedRepository.logout(account.localId) }
+                                },
+                            ) {
+                                Text(stringResource(R.string.log_out))
+                            }
                         }
                     }
                 }
