@@ -48,7 +48,7 @@ class MastodonRemoteSource(
     private val mapper: MastodonPostMapper,
 ) {
 
-    suspend fun loadPage(cursor: PageCursor?, limit: Int = 40): Page {
+    suspend fun loadPage(cursor: PageCursor?, limit: Int = PAGE_SIZE): Page {
         val response = try {
             if (cursor == null) api.homeTimeline(bearer, limit = limit)
             else api.timelinePage(bearer, cursor.raw)
@@ -73,5 +73,10 @@ class MastodonRemoteSource(
         )
         in 500..599 -> SourceError.Server(code(), "upstream error")
         else -> SourceError.Server(code(), "unexpected status")
+    }
+
+    private companion object {
+        /** Small pages keep the first screen fast and make infinite scroll feel smooth. */
+        const val PAGE_SIZE = 10
     }
 }

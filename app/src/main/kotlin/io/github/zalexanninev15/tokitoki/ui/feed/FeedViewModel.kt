@@ -6,7 +6,6 @@ import androidx.lifecycle.viewModelScope
 import io.github.zalexanninev15.tokitoki.data.repo.FeedRepository
 import io.github.zalexanninev15.tokitoki.domain.model.FeedItem
 import io.github.zalexanninev15.tokitoki.domain.model.FeedItemId
-import io.github.zalexanninev15.tokitoki.domain.model.SourceKind
 import io.github.zalexanninev15.tokitoki.domain.readsync.MonotonicClock
 import io.github.zalexanninev15.tokitoki.domain.readsync.VisibilityReadTracker
 import kotlinx.coroutines.FlowPreview
@@ -23,10 +22,29 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-enum class FeedTab { ALL, MASTODON, MISSKEY }
+/**
+ * A tab is either the merged view or one specific connected account.
+ *
+ * Built from the account list rather than being a fixed enum, so adding a second Mastodon
+ * account gives it its own tab instead of merging it into a shared one.
+ */
+data class FeedTab(
+    val accountLocalId: String?,
+    val title: String,
+) {
+    val isAll: Boolean get() = accountLocalId == null
+
+    companion object {
+        const val ALL_TITLE = "\u0412\u0441\u0435"
+    }
+}
 
 data class FeedUiState(
     val items: List<FeedItem> = emptyList(),
+    val tabs: List<FeedTab> = emptyList(),
+    val selectedTabIndex: Int = 0,
+    /** Item id -> "misskey · @me@host", shown next to the author handle. */
+    val sourceLabels: Map<String, String> = emptyMap(),
     val readIds: Set<String> = emptySet(),
     val isRefreshing: Boolean = false,
     val isLoadingMore: Boolean = false,
@@ -37,7 +55,7 @@ data class FeedUiState(
 @OptIn(FlowPreview::class, kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class FeedViewModel(private val repository: FeedRepository) : ViewModel() {
 
-    private val tab = MutableStateFlow(FeedTab.ALL)
+    private val tabIndex = MutableStateFlow(0)
     private val refreshing = MutableStateFlow(false)
     private val loadingMore = MutableStateFlow(false)
     private val error = MutableStateFlow<String?>(null)
@@ -45,7 +63,7 @@ class FeedViewModel(private val repository: FeedRepository) : ViewModel() {
     private val seenChannel = Channel<FeedItemId>(Channel.BUFFERED)
     private val tracker = VisibilityReadTracker(clock = MonotonicClock { System.currentTimeMillis() })
 
-    val selectedTab: StateFlow<FeedTab> = tab.asStateFlow()
+    val selectedTabIndex: StateFlow<Int> = tabIndex.asStateFlow()
 
     private val accounts = repository.observeAccounts()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
@@ -60,13 +78,29 @@ class FeedViewModel(private val repository: FeedRepository) : ViewModel() {
     // outer flow re-emit, so switching tabs used to leave the previous list on screen.
     val uiState: StateFlow<FeedUiState> = combine(
         feed,
-        tab,
+        tabIndex,
         refreshing,
         loadingMore,
         error,
-    ) { (all, items), currentTab, isRefreshing, isLoadingMore, errorMessage ->
+    ) { (all, items), index, isRefreshing, isLoadingMore, errorMessage ->
+        val enabled = all.filter { it.enabled }
+        val tabs = buildList {
+            add(FeedTab(accountLocalId = null, title = FeedTab.ALL_TITLE))
+            enabled.forEach { add(FeedTab(it.localId, it.handle)) }
+        }
+        val safeIndex = index.coerceIn(0, (tabs.size - 1).coerceAtLeast(0))
+        val current = tabs.getOrNull(safeIndex)
+
+        val labels = enabled.associate { account ->
+            account.localId to "${'$'}{account.source.lowercase()} · ${'$'}{account.handle}"
+        }
+
         FeedUiState(
-            items = items.filter { it.matches(currentTab) },
+            items = items.filter { current == null || current.isAll ||
+                it.id.accountLocalId == current.accountLocalId },
+            tabs = tabs,
+            selectedTabIndex = safeIndex,
+            sourceLabels = labels,
             readIds = emptySet(),
             isRefreshing = isRefreshing,
             isLoadingMore = isLoadingMore,
@@ -109,8 +143,8 @@ class FeedViewModel(private val repository: FeedRepository) : ViewModel() {
         seenChannel.trySend(seen)
     }
 
-    fun selectTab(next: FeedTab) {
-        tab.value = next
+    fun selectTab(index: Int) {
+        tabIndex.value = index
     }
 
     fun refresh() {
@@ -133,12 +167,6 @@ class FeedViewModel(private val repository: FeedRepository) : ViewModel() {
             error.value = failures.firstOrNull()?.message
             loadingMore.value = false
         }
-    }
-
-    private fun FeedItem.matches(current: FeedTab): Boolean = when (current) {
-        FeedTab.ALL -> true
-        FeedTab.MASTODON -> id.source == SourceKind.MASTODON
-        FeedTab.MISSKEY -> id.source == SourceKind.MISSKEY
     }
 
     class Factory(private val repository: FeedRepository) : ViewModelProvider.Factory {

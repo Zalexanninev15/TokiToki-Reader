@@ -47,4 +47,20 @@
     <string name="follows_bot">БОТ</string>
     <string name="action_back">Назад</string>
     <string name="action_follows">Подписки</string>
+    <string name="about_title">О приложении</string>
+    <string name="about_body">Читалка лент Mastodon и Misskey в одном месте.</string>
+    <string name="about_author">Автор</string>
+    <string name="about_mastodon">Mastodon — @voltmor</string>
+    <string name="about_sharkey">Sharkey — @qkon4</string>
+    <string name="about_support">Проект</string>
+    <string name="about_contacts">Связаться</string>
+    <string name="about_donate">Поддержать</string>
+    <string name="about_source">Исходный код</string>
+    <string name="action_save">Сохранить</string>
+    <string name="action_export">Экспорт</string>
+    <string name="image_saved">Сохранено в «Загрузки»</string>
+    <string name="image_save_failed">Не удалось сохранить изображение</string>
+    <string name="follows_exported">Сохранено: %1$s</string>
+    <string name="follows_export_failed">Не удалось сохранить файл</string>
+    <string name="misskey_hint">Misskey (а также Sharkey, Iceshrimp, CherryPick)</string>
 </resources>

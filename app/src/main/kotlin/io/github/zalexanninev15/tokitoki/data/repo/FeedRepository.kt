@@ -24,6 +24,9 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 
 private const val CACHE_LIMIT = 2_000
@@ -40,7 +43,13 @@ class FeedRepository(
     private val exhausted = mutableSetOf<String>()
 
     fun observeFeed(accountIds: List<String>): Flow<List<FeedItem>> =
-        feedDao.observeFeed(accountIds).map { rows -> rows.map { it.toDomain() } }
+        feedDao.observeFeed(accountIds)
+            .distinctUntilChanged()
+            // Each row decodes two JSON blobs. Doing that for the whole window on the
+            // main thread, on every Room emission, was a large part of why refreshing
+            // felt slow.
+            .map { rows -> rows.map { it.toDomain() } }
+            .flowOn(Dispatchers.Default)
 
     fun observeAccounts(): Flow<List<AccountEntity>> = accountDao.observeAll()
 
@@ -58,9 +67,14 @@ class FeedRepository(
         exhausted.clear()
         val accounts = accountDao.enabled()
 
-        accounts.map { account ->
+        val failures = accounts.map { account ->
             async { runCatching { loadInto(account, cursor = null) }.exceptionOrNull() }
         }.awaitAll().filterIsInstance<SourceError>()
+
+        // Once per cycle, not once per page: the trim query sorts the whole table and
+        // takes the write lock, so running it per page serialised every parallel fetch.
+        feedDao.trimTo(CACHE_LIMIT)
+        failures
     }
 
     suspend fun loadMore(): List<SourceError> = coroutineScope {
@@ -71,6 +85,7 @@ class FeedRepository(
             }
             .awaitAll()
             .filterIsInstance<SourceError>()
+            .also { feedDao.trimTo(CACHE_LIMIT) }
     }
 
     private suspend fun loadInto(account: AccountEntity, cursor: PageCursor?) {
@@ -94,7 +109,6 @@ class FeedRepository(
         }
 
         feedDao.insertAll(page.items.map { it.toEntity() })
-        feedDao.trimTo(CACHE_LIMIT)
 
         cursors[account.localId] = page.next
         if (page.next == null) exhausted += account.localId

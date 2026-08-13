@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -22,13 +23,18 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -36,6 +42,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import io.github.zalexanninev15.tokitoki.R
 import io.github.zalexanninev15.tokitoki.domain.model.FollowedAccount
+import io.github.zalexanninev15.tokitoki.util.Downloads
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,6 +53,11 @@ fun FollowsScreen(
     onOpenProfile: (String) -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val snackbar = remember { SnackbarHostState() }
+    val exportedMessage = stringResource(R.string.follows_exported)
+    val exportFailedMessage = stringResource(R.string.follows_export_failed)
 
     Scaffold(
         topBar = {
@@ -60,6 +73,28 @@ fun FollowsScreen(
                         }
                     }
                 },
+                actions = {
+                    IconButton(
+                        enabled = state.accounts.isNotEmpty(),
+                        onClick = {
+                            scope.launch {
+                                val result = Downloads.saveText(
+                                    context,
+                                    "tokitoki_follows_${System.currentTimeMillis()}.json",
+                                    viewModel.exportJson(),
+                                )
+                                snackbar.showSnackbar(
+                                    result.fold(
+                                        onSuccess = { name -> exportedMessage.format(name) },
+                                        onFailure = { exportFailedMessage },
+                                    ),
+                                )
+                            }
+                        },
+                    ) {
+                        Icon(Icons.Default.Download, stringResource(R.string.action_export))
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
@@ -70,6 +105,7 @@ fun FollowsScreen(
                 },
             )
         },
+        snackbarHost = { SnackbarHost(snackbar) },
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
             when {

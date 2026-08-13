@@ -27,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -40,6 +41,8 @@ import java.util.Date
 fun FeedItemCard(
     item: FeedItem,
     isRead: Boolean,
+    /** e.g. "mastodon · @me@mastodon.ml" — which connected account this arrived through. */
+    sourceLabel: String? = null,
     onOpenLink: (String) -> Unit,
     onCopyLink: (String?) -> Unit,
     onOpenImage: (String) -> Unit,
@@ -86,10 +89,13 @@ fun FeedItemCard(
                         maxLines = 1,
                     )
                     Text(
-                        text = item.author.handle,
+                        text = sourceLabel
+                            ?.let { "${item.author.handle} ($it)" }
+                            ?: item.author.handle,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
                 Text(

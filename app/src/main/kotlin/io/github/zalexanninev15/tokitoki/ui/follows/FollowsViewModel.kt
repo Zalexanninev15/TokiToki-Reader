@@ -39,6 +39,35 @@ class FollowsViewModel(
         }
     }
 
+    /**
+     * Plain JSON so the file is useful outside this app — importing into another client
+     * or just keeping a backup of who you follow.
+     */
+    fun exportJson(): String = buildString {
+        append("{\n  \"accounts\": [\n")
+        _state.value.accounts.forEachIndexed { index, account ->
+            append("    {")
+            append("\"handle\": \"").append(account.handle.escapeJson()).append("\", ")
+            append("\"name\": \"").append(account.displayName.escapeJson()).append("\", ")
+            append("\"url\": \"").append(account.profileUrl.orEmpty().escapeJson()).append("\", ")
+            append("\"source\": \"").append(account.source.name.lowercase()).append("\"}")
+            if (index != _state.value.accounts.lastIndex) append(",")
+            append("\n")
+        }
+        append("  ]\n}\n")
+    }
+
+    private fun String.escapeJson(): String = buildString {
+        this@escapeJson.forEach { c ->
+            when (c) {
+                '\\' -> append("\\\\")
+                '"' -> append("\\\"")
+                '\n', '\r', '\t' -> append(' ')
+                else -> append(c)
+            }
+        }
+    }
+
     class Factory(
         private val repository: FollowsRepository,
         private val accountLocalId: String,

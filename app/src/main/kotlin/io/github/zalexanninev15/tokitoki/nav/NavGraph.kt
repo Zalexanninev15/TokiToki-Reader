@@ -9,6 +9,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import io.github.zalexanninev15.tokitoki.AppContainer
+import io.github.zalexanninev15.tokitoki.ui.about.AboutScreen
 import io.github.zalexanninev15.tokitoki.ui.accounts.AccountsScreen
 import io.github.zalexanninev15.tokitoki.ui.auth.AddAccountScreen
 import androidx.browser.customtabs.CustomTabsIntent
@@ -26,6 +27,7 @@ object Routes {
     const val ACCOUNTS = "accounts"
     const val ADD_ACCOUNT = "accounts/add"
     const val SETTINGS = "settings"
+    const val ABOUT = "about"
     const val IMAGE = "image/{url}"
     const val FOLLOWS = "follows/{accountId}"
 
@@ -58,6 +60,7 @@ fun TokiTokiNavHost(
                 container = container,
                 onOpenSettings = { navController.navigate(Routes.SETTINGS) },
                 onOpenAccounts = { navController.navigate(Routes.ACCOUNTS) },
+                onOpenAbout = { navController.navigate(Routes.ABOUT) },
                 // Long-pressing a source tab jumps straight to that account's
                 // subscriptions, which is the shortcut requested for the feature.
                 onOpenFollows = { id -> navController.navigate(Routes.follows(id)) },
@@ -102,6 +105,17 @@ fun TokiTokiNavHost(
                     navController.popBackStack(Routes.FEED, inclusive = false)
                 },
                 onBack = { navController.popBackStack() },
+            )
+        }
+
+        composable(Routes.ABOUT) {
+            val context = LocalContext.current
+            AboutScreen(
+                onBack = { navController.popBackStack() },
+                onOpenLink = { url ->
+                    CustomTabsIntent.Builder().setShowTitle(true).build()
+                        .launchUrl(context, url.toUri())
+                },
             )
         }
 

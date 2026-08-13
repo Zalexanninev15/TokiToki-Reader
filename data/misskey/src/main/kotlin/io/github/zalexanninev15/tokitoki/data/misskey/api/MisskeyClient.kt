@@ -50,7 +50,7 @@ class MisskeyRemoteSource(
     private val mapper: MisskeyPostMapper,
 ) {
 
-    suspend fun loadPage(cursor: PageCursor?, limit: Int = 60): Page {
+    suspend fun loadPage(cursor: PageCursor?, limit: Int = PAGE_SIZE): Page {
         val notes = try {
             api.homeTimeline(TimelineRequest(i = token, limit = limit, untilId = cursor?.raw))
         } catch (e: IOException) {
@@ -70,5 +70,10 @@ class MisskeyRemoteSource(
         // treating a short page as exhaustion truncates the timeline early.
         val next = notes.lastOrNull()?.id?.let(::PageCursor)
         return Page(items, next)
+    }
+
+    private companion object {
+        /** Small pages keep the first screen fast and make infinite scroll feel smooth. */
+        const val PAGE_SIZE = 10
     }
 }

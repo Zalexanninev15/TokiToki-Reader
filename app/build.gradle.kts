@@ -15,7 +15,7 @@ android {
         minSdk = 26
         targetSdk = 35
         versionCode = 1
-        versionName = "0.1.0"
+        versionName = "0.1-pre-alpha"
 
         // Consumed by the OAuth/MiAuth redirect intent filters in the manifest.
         manifestPlaceholders["authScheme"] = "tokitoki"

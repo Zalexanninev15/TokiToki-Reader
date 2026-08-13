@@ -107,7 +107,18 @@ fun AddAccountScreen(
                 value = state.instanceUrl,
                 onValueChange = viewModel::updateInstanceUrl,
                 label = { Text(stringResource(R.string.instance_url)) },
-                placeholder = { Text("example.social") },
+                placeholder = {
+                    Text(
+                        if (state.source == SourceKind.MISSKEY) "misskey.io" else "mastodon.social",
+                    )
+                },
+                supportingText = {
+                    // Forks speak the same API, and people do not always know that their
+                    // Sharkey instance counts as Misskey here.
+                    if (state.source == SourceKind.MISSKEY) {
+                        Text(stringResource(R.string.misskey_hint))
+                    }
+                },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(

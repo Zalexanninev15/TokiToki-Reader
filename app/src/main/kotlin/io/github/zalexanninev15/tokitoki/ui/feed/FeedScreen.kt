@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -26,7 +27,9 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Tab
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.material3.TabRow
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -48,7 +51,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.browser.customtabs.CustomTabsIntent
 import io.github.zalexanninev15.tokitoki.AppContainer
 import io.github.zalexanninev15.tokitoki.R
-import io.github.zalexanninev15.tokitoki.domain.model.SourceKind
 import io.github.zalexanninev15.tokitoki.ui.components.FeedItemCard
 import kotlinx.coroutines.launch
 
@@ -60,15 +62,18 @@ fun FeedScreen(
     onOpenAccounts: () -> Unit,
     onOpenImage: (String) -> Unit,
     onOpenFollows: (String) -> Unit = {},
+    onOpenAbout: () -> Unit = {},
 ) {
     val viewModel: FeedViewModel = viewModel(
         factory = FeedViewModel.Factory(container.feedRepository),
     )
-    val accounts by container.feedRepository.observeAccounts()
-        .collectAsStateWithLifecycle(initialValue = emptyList())
     val followsLabel = stringResource(R.string.action_follows)
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val tab by viewModel.selectedTab.collectAsStateWithLifecycle()
+    val pagerState = rememberPagerState(pageCount = { state.tabs.size.coerceAtLeast(1) })
+
+    // The pager is the source of truth for which tab is showing; the view model is told
+    // afterwards. Driving it the other way makes the swipe fight the state update.
+    LaunchedEffect(pagerState.currentPage) { viewModel.selectTab(pagerState.currentPage) }
 
     val context = LocalContext.current
     val listState = rememberLazyListState()
@@ -116,6 +121,9 @@ fun FeedScreen(
                     IconButton(onClick = onOpenAccounts) {
                         Icon(Icons.Default.AccountCircle, stringResource(R.string.accounts))
                     }
+                    IconButton(onClick = onOpenAbout) {
+                        Icon(Icons.Default.Info, stringResource(R.string.about_title))
+                    }
                     IconButton(onClick = onOpenSettings) {
                         Icon(Icons.Default.Settings, stringResource(R.string.settings))
                     }
@@ -124,41 +132,36 @@ fun FeedScreen(
         },
     ) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize()) {
-            TabRow(selectedTabIndex = tab.ordinal) {
-                FeedTab.entries.forEach { entry ->
-                    Tab(
-                        selected = tab == entry,
-                        onClick = { viewModel.selectTab(entry) },
-                        modifier = Modifier.combinedClickable(
-                            onClick = { viewModel.selectTab(entry) },
-                            onLongClick = {
-                                // Long press jumps to the subscriptions of the first
-                                // connected account for that source.
-                                val source = when (entry) {
-                                    FeedTab.MASTODON -> SourceKind.MASTODON
-                                    FeedTab.MISSKEY -> SourceKind.MISSKEY
-                                    FeedTab.ALL -> null
-                                }
-                                val target = accounts.firstOrNull {
-                                    source == null || it.source == source.name
-                                }
-                                target?.let { onOpenFollows(it.localId) }
-                            },
-                            onLongClickLabel = followsLabel,
-                        ),
-                        text = {
-                            Text(
-                                when (entry) {
-                                    FeedTab.ALL -> stringResource(R.string.tab_all)
-                                    FeedTab.MASTODON -> stringResource(R.string.tab_mastodon)
-                                    FeedTab.MISSKEY -> stringResource(R.string.tab_misskey)
+            if (state.tabs.size > 1) {
+                ScrollableTabRow(
+                    selectedTabIndex = pagerState.currentPage.coerceIn(
+                        0,
+                        (state.tabs.size - 1).coerceAtLeast(0),
+                    ),
+                    edgePadding = 8.dp,
+                ) {
+                    state.tabs.forEachIndexed { index, entry ->
+                        Tab(
+                            selected = pagerState.currentPage == index,
+                            onClick = { scope.launch { pagerState.animateScrollToPage(index) } },
+                            modifier = Modifier.combinedClickable(
+                                onClick = { scope.launch { pagerState.animateScrollToPage(index) } },
+                                onLongClick = {
+                                    // Long press on an account tab opens its subscriptions.
+                                    entry.accountLocalId?.let(onOpenFollows)
                                 },
-                            )
-                        },
-                    )
+                                onLongClickLabel = followsLabel,
+                            ),
+                            text = { Text(entry.title, maxLines = 1) },
+                        )
+                    }
                 }
             }
 
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize(),
+            ) { _ ->
             PullToRefreshBox(
                 isRefreshing = state.isRefreshing,
                 onRefresh = viewModel::refresh,
@@ -182,6 +185,13 @@ fun FeedScreen(
                             FeedItemCard(
                                 item = item,
                                 isRead = item.id.value in state.readIds,
+                                // Only in the merged view: on a per-account tab the
+                                // source is already the tab you are looking at.
+                                sourceLabel = if (state.selectedTabIndex == 0) {
+                                    state.sourceLabels[item.id.accountLocalId]
+                                } else {
+                                    null
+                                },
                                 onOpenLink = { url -> context.openInCustomTab(url) },
                                 onCopyLink = { url ->
                                     if (url != null) {
@@ -203,6 +213,7 @@ fun FeedScreen(
                         }
                     }
                 }
+            }
             }
         }
     }

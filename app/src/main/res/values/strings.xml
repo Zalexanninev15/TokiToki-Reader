@@ -50,4 +50,20 @@
     <string name="follows_bot">BOT</string>
     <string name="action_back">Back</string>
     <string name="action_follows">Subscriptions</string>
+    <string name="about_title">About</string>
+    <string name="about_body">A reader for Mastodon and Misskey timelines in one place.</string>
+    <string name="about_author">Author</string>
+    <string name="about_mastodon">Mastodon — @voltmor</string>
+    <string name="about_sharkey">Sharkey — @qkon4</string>
+    <string name="about_support">Project</string>
+    <string name="about_contacts">Contact</string>
+    <string name="about_donate">Donate</string>
+    <string name="about_source">Source code</string>
+    <string name="action_save">Save</string>
+    <string name="action_export">Export</string>
+    <string name="image_saved">Saved to Downloads</string>
+    <string name="image_save_failed">Could not save the image</string>
+    <string name="follows_exported">Saved: %1$s</string>
+    <string name="follows_export_failed">Could not save the file</string>
+    <string name="misskey_hint">Misskey (also Sharkey, Iceshrimp, CherryPick)</string>
 </resources>
