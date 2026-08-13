@@ -3,6 +3,8 @@ package io.github.zalexanninev15.tokitoki.ui.media
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.navigationBars
@@ -15,9 +17,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material3.Icon
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -32,16 +37,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
 import io.github.zalexanninev15.tokitoki.R
 import io.github.zalexanninev15.tokitoki.util.Downloads
 import kotlinx.coroutines.launch
 
 @Composable
-fun ImageViewerScreen(url: String, onClose: () -> Unit) {
+fun ImageViewerScreen(
+    url: String,
+    onClose: () -> Unit,
+    onOpenExternally: (String) -> Unit = {},
+) {
     var scale by remember { mutableFloatStateOf(1f) }
     var offset by remember { mutableStateOf(Offset.Zero) }
     var dismissDrag by remember { mutableFloatStateOf(0f) }
@@ -78,10 +88,34 @@ fun ImageViewerScreen(url: String, onClose: () -> Unit) {
             },
         contentAlignment = Alignment.Center,
     ) {
-        AsyncImage(
+        // A silent black screen was the old failure mode: Mastodon serves `gifv`
+        // attachments as MP4, which no image decoder can open, and the viewer just
+        // showed nothing. Now the failure is stated and the file can be opened outside.
+        SubcomposeAsyncImage(
             model = url,
             contentDescription = stringResource(R.string.cd_image),
             contentScale = ContentScale.Fit,
+            loading = {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = Color.White)
+                }
+            },
+            error = {
+                Column(
+                    modifier = Modifier.fillMaxSize().padding(32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
+                ) {
+                    Text(
+                        text = stringResource(R.string.image_unsupported),
+                        color = Color.White,
+                        textAlign = TextAlign.Center,
+                    )
+                    TextButton(onClick = { onOpenExternally(url) }) {
+                        Text(stringResource(R.string.open_link))
+                    }
+                }
+            },
             modifier = Modifier
                 .fillMaxSize()
                 .graphicsLayer(

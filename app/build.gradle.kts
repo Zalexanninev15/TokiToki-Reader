@@ -15,7 +15,7 @@ android {
         minSdk = 26
         targetSdk = 35
         versionCode = 1
-        versionName = "0.1-pre-alpha"
+        versionName = "0.1-alpha"
 
         // Consumed by the OAuth/MiAuth redirect intent filters in the manifest.
         manifestPlaceholders["authScheme"] = "tokitoki"
@@ -67,7 +67,6 @@ dependencies {
     implementation(project(":data:misskey"))
 
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
     implementation(libs.androidx.splashscreen)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.navigation.compose)

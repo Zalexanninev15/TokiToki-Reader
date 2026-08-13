@@ -1,5 +1,6 @@
 package io.github.zalexanninev15.tokitoki
 
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -12,9 +13,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import io.github.zalexanninev15.tokitoki.data.prefs.AppSettings
 import io.github.zalexanninev15.tokitoki.nav.TokiTokiNavHost
+import io.github.zalexanninev15.tokitoki.util.LocaleController
 import io.github.zalexanninev15.tokitoki.ui.theme.TokiTokiTheme
 
 class MainActivity : ComponentActivity() {
+
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(LocaleController.wrap(newBase))
+    }
 
     /** Set when the activity is resumed by an OAuth/MiAuth redirect. */
     private val pendingCallback = mutableStateOf<Uri?>(null)

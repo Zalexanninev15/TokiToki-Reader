@@ -37,16 +37,5 @@
                 <data android:scheme="${authScheme}" android:host="auth" />
             </intent-filter>
         </activity>
-
-        <!-- Lets AppCompat persist the chosen language on API < 33, where the system
-             has no per-app language store of its own. -->
-        <service
-            android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
-            android:enabled="false"
-            android:exported="false">
-            <meta-data
-                android:name="autoStoreLocales"
-                android:value="true" />
-        </service>
     </application>
 </manifest>

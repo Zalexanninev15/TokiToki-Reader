@@ -78,4 +78,6 @@
     <string name="language_en">英語</string>
     <string name="language_ru">ロシア語</string>
     <string name="language_ja">日本語</string>
+    <string name="image_unsupported">このファイルはここでは表示できません。動画または未対応の形式の可能性があります。</string>
+    <string name="open_link">開く</string>
 </resources>

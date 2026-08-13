@@ -78,4 +78,6 @@
     <string name="language_en">English</string>
     <string name="language_ru">Russian</string>
     <string name="language_ja">Japanese</string>
+    <string name="image_unsupported">This file cannot be shown here — it may be a video or an unsupported format.</string>
+    <string name="open_link">Open</string>
 </resources>

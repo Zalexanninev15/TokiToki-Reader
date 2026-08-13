@@ -129,6 +129,10 @@ fun TokiTokiNavHost(
         ) { entry ->
             ImageViewerScreen(
                 url = Uri.decode(entry.arguments?.getString("url").orEmpty()),
+                onOpenExternally = { link ->
+                    CustomTabsIntent.Builder().setShowTitle(true).build()
+                        .launchUrl(navController.context, link.toUri())
+                },
                 onClose = { navController.popBackStack() },
             )
         }

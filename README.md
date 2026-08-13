@@ -1,7 +1,7 @@
 # TokiToki Reader
 
 ![platform](https://img.shields.io/badge/platform-Android_8.0%2B-3DDC84.svg?logo=android)
-![version](https://img.shields.io/badge/version-0.1_pre--alpha-orange)
+![version](https://img.shields.io/badge/version-0.1_alpha-orange)
 ![license](https://img.shields.io/badge/license-MIT-blue)
 
 **Русский** · [English](README.en.md) · [日本語](README.ja.md)
@@ -9,7 +9,7 @@
 Читалка лент Mastodon и Misskey в одном приложении. Общая лента, отдельная вкладка на каждый аккаунт, синхронизация прочитанного с сервером там, где это вообще возможно.
 
 > [!WARNING]
-> Версия 0.1 pre-alpha. Многого ещё нет, что-то работает криво. Telegram пока не поддерживается.
+> Версия 0.1 alpha. Многого ещё нет, что-то работает криво. Telegram пока не поддерживается.
 
 ## Возможности
 

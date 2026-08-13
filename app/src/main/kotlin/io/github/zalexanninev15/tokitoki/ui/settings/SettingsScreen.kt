@@ -2,9 +2,8 @@ package io.github.zalexanninev15.tokitoki.ui.settings
 
 import android.os.Build
 import androidx.compose.foundation.layout.Arrangement
-import androidx.appcompat.app.AppCompatDelegate
+import android.app.Activity
 import androidx.compose.foundation.layout.Column
-import androidx.core.os.LocaleListCompat
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -26,8 +25,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -36,6 +38,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.zalexanninev15.tokitoki.AppContainer
 import io.github.zalexanninev15.tokitoki.R
 import io.github.zalexanninev15.tokitoki.data.prefs.AppSettings
+import io.github.zalexanninev15.tokitoki.util.LocaleController
 import io.github.zalexanninev15.tokitoki.ui.theme.FontSize
 import io.github.zalexanninev15.tokitoki.ui.theme.ThemeMode
 import kotlinx.coroutines.launch
@@ -43,6 +46,8 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(container: AppContainer, onBack: () -> Unit) {
+    val context = LocalContext.current
+    var currentLanguage by remember { mutableStateOf(LocaleController.current(context)) }
     val settings by container.settingsStore.settings
         .collectAsStateWithLifecycle(initialValue = AppSettings())
     val scope = rememberCoroutineScope()
@@ -127,29 +132,22 @@ fun SettingsScreen(container: AppContainer, onBack: () -> Unit) {
 
             HorizontalDivider()
             SectionTitle(stringResource(R.string.language))
-            // AppCompatDelegate rather than recreating the activity by hand: it is what
-            // the system per-app language setting reads on API 33+, so the choice made
-            // here and the one made in Android settings stay the same choice.
             listOf(
                 null to R.string.language_system,
                 "en" to R.string.language_en,
                 "ru" to R.string.language_ru,
                 "ja" to R.string.language_ja,
             ).forEach { (tag, labelRes) ->
-                val current = AppCompatDelegate.getApplicationLocales()
-                    .toLanguageTags().takeIf { it.isNotBlank() }?.substringBefore('-')
                 RadioRow(
                     label = stringResource(labelRes),
-                    selected = current == tag,
+                    selected = currentLanguage == tag,
                     onSelect = {
-                        AppCompatDelegate.setApplicationLocales(
-                            if (tag == null) {
-                                LocaleListCompat.getEmptyLocaleList()
-                            } else {
-                                LocaleListCompat.forLanguageTags(tag)
-                            },
-                        )
+                        currentLanguage = tag
+                        val needsRestart = LocaleController.apply(context, tag)
                         scope.launch { container.settingsStore.setLanguage(tag) }
+                        // Below Android 13 the framework does not restart us, so the new
+                        // resources only take effect on an explicit recreate.
+                        if (needsRestart) (context as? Activity)?.recreate()
                     },
                 )
             }

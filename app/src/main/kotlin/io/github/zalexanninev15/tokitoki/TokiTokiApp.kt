@@ -1,6 +1,11 @@
 package io.github.zalexanninev15.tokitoki
 
 import android.app.Application
+import android.os.Build
+import coil.ImageLoader
+import coil.ImageLoaderFactory
+import coil.decode.GifDecoder
+import coil.decode.ImageDecoderDecoder
 import io.github.zalexanninev15.tokitoki.data.db.TokiTokiDatabase
 import io.github.zalexanninev15.tokitoki.data.prefs.SettingsStore
 import io.github.zalexanninev15.tokitoki.data.repo.AuthService
@@ -39,7 +44,24 @@ class AppContainer(app: Application) {
     }
 }
 
-class TokiTokiApp : Application() {
+class TokiTokiApp : Application(), ImageLoaderFactory {
+
+    /**
+     * Coil decodes static images out of the box but not animated ones: without these
+     * decoders an animated GIF or WebP fails and the slot just stays black.
+     */
+    override fun newImageLoader(): ImageLoader = ImageLoader.Builder(this)
+        .components {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                add(ImageDecoderDecoder.Factory())
+            } else {
+                add(GifDecoder.Factory())
+            }
+        }
+        .crossfade(true)
+        .respectCacheHeaders(false)
+        .build()
+
 
     lateinit var container: AppContainer
         private set

@@ -75,4 +75,6 @@
     <string name="language_en">Английский</string>
     <string name="language_ru">Русский</string>
     <string name="language_ja">Японский</string>
+    <string name="image_unsupported">Этот файл нельзя показать здесь — возможно, это видео или неподдерживаемый формат.</string>
+    <string name="open_link">Открыть</string>
 </resources>

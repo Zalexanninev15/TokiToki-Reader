@@ -67,8 +67,8 @@ jobs:
       - name: Publish
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v0.1-pre-alpha-${{ github.run_number }}
-          name: 0.1 pre-alpha (build ${{ github.run_number }})
+          tag_name: v0.1-alpha-${{ github.run_number }}
+          name: 0.1 alpha (build ${{ github.run_number }})
           prerelease: true
           files: out/*.apk
           body: |
