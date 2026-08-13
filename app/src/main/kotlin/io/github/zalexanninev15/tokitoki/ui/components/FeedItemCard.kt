@@ -89,7 +89,10 @@ fun FeedItemCard(
                         .size(40.dp)
                         .clip(RoundedCornerShape(12.dp))
                         .then(
-                            if (onOpenProfile != null) {
+                            // Rows cached before the author id was stored have an empty
+                            // one; opening those would 404, so the avatar stays inert
+                            // until the entry is refreshed.
+                            if (onOpenProfile != null && item.author.remoteId.isNotBlank()) {
                                 Modifier.clickable {
                                     onOpenProfile(item.id.accountLocalId, item.author.remoteId)
                                 }

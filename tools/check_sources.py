@@ -12,7 +12,9 @@ minutes, and a mangled import wastes all of it.
   5. literal "${'$'}" left in source (a template that leaked as text)
   6. project top-level functions used from another file without an import, and any use
      of a private top-level function outside the file that declares it
-  7. common Compose/coroutine functions used without their import — these start with a
+  7. common Compose/coroutine functions used without their import
+  8. Android string resources with characters aapt rejects — an unescaped apostrophe
+     fails resource compilation, not Kotlin compilation, so nothing above would see it — these start with a
      lowercase letter, so the checks above skip them, and a missing one is exactly what
      a scripted import insertion gets wrong
 
@@ -152,6 +154,24 @@ def main() -> int:
 
         if "${'$'}" in text:
             problems.append(f"{rel}: literal \"${{'$'}}\" left in source")
+
+    for strings_file in (ROOT / "app/src/main/res").rglob("strings.xml"):
+        for number, line in enumerate(
+                strings_file.read_text(encoding="utf-8").splitlines(), start=1):
+            match = re.search(r"<string name=\"([\w_]+)\">(.*)</string>", line)
+            if not match:
+                continue
+            name, value = match.group(1), match.group(2)
+            rel_strings = strings_file.relative_to(ROOT)
+            # aapt treats these as escape characters inside a resource value.
+            if re.search(r"(?<!\\)'", value):
+                problems.append(f"{rel_strings}:{number}: {name} has an unescaped apostrophe")
+            if re.search(r'(?<!\\)"', value):
+                problems.append(f"{rel_strings}:{number}: {name} has an unescaped quote")
+            for escape in re.findall(r"\\(.)", value):
+                if escape not in "ntu'\"\\@?":
+                    problems.append(
+                        f"{rel_strings}:{number}: {name} has an invalid escape \\{escape}")
 
     strings = ROOT / "app/src/main/res/values/strings.xml"
     defined = set(re.findall(r'name="([\w_]+)"', strings.read_text(encoding="utf-8")))

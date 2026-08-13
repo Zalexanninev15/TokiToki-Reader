@@ -92,7 +92,7 @@
     <string name="compose_quote">Quote</string>
     <string name="compose_send">Send</string>
     <string name="compose_cw">Content warning</string>
-    <string name="compose_text">What's on your mind?</string>
+    <string name="compose_text">What\'s on your mind?</string>
     <string name="visibility_public">Public</string>
     <string name="visibility_unlisted">Unlisted</string>
     <string name="visibility_followers">Followers</string>

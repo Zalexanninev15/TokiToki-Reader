@@ -28,6 +28,12 @@ data class FeedItemEntity(
     val accountLocalId: String,
     val source: String,
     val remoteId: String,
+    /**
+     * The author's id on their server — NOT the post id. Restoring Author from the post
+     * id is what made "open profile" from the feed return 404 while the same profile
+     * opened fine from the subscriptions list.
+     */
+    val authorRemoteId: String = "",
     val authorName: String,
     val authorHandle: String,
     val authorAvatarUrl: String?,
