@@ -130,6 +130,13 @@ data class FeedItem(
     val repostedBy: Author? = null,
     /** Null when the source has no notion of favourites or boosts. */
     val interactions: PostInteractions? = null,
+    /**
+     * Instance emoji used in this post: shortcode without colons -> image URL.
+     *
+     * Carried per post rather than fetched globally because every instance defines its
+     * own set, and a boost can bring emoji from a server the reader has never seen.
+     */
+    val customEmojis: Map<String, String> = emptyMap(),
 ) {
     val hasMedia: Boolean get() = media.isNotEmpty() || reposted?.media?.isNotEmpty() == true
 

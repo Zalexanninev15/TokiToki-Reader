@@ -26,6 +26,7 @@ data class MastodonAccountDto(
     val avatar: String? = null,
     val bot: Boolean = false,
     val url: String? = null,
+    val emojis: List<CustomEmojiDto> = emptyList(),
 )
 
 @Serializable
@@ -67,6 +68,14 @@ data class StatusDto(
     @SerialName("favourites_count") val favouritesCount: Int = 0,
     @SerialName("reblogs_count") val reblogsCount: Int = 0,
     @SerialName("replies_count") val repliesCount: Int = 0,
+    val emojis: List<CustomEmojiDto> = emptyList(),
+)
+
+@Serializable
+data class CustomEmojiDto(
+    val shortcode: String,
+    val url: String,
+    @SerialName("static_url") val staticUrl: String? = null,
 )
 
 /**

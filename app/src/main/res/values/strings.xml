@@ -107,4 +107,12 @@
     <string name="offline_save_post">Save post</string>
     <string name="more">More</string>
     <string name="copy_text">Copy text</string>
+    <string name="offline_title">Offline</string>
+    <string name="offline_hint">Keeps the cached feed and its images on the device. Saved posts are never evicted by the cache trim.</string>
+    <string name="offline_clear">Clear saved</string>
+    <string name="action_share">Share</string>
+    <string name="feed_layout">Feed layout</string>
+    <string name="feed_one_column">One post per row</string>
+    <string name="feed_two_columns">Two posts per row</string>
+    <string name="sensitive_tap_to_show">Sensitive — tap to show</string>
 </resources>

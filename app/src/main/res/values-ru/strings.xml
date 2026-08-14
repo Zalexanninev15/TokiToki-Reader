@@ -104,4 +104,12 @@
     <string name="offline_save_post">Сохранить пост</string>
     <string name="more">Ещё</string>
     <string name="copy_text">Копировать текст</string>
+    <string name="offline_title">Офлайн</string>
+    <string name="offline_hint">Оставляет ленту и её изображения на устройстве. Сохранённые посты не удаляются при очистке кэша.</string>
+    <string name="offline_clear">Очистить сохранённое</string>
+    <string name="action_share">Поделиться</string>
+    <string name="feed_layout">Вид ленты</string>
+    <string name="feed_one_column">Один пост в ряд</string>
+    <string name="feed_two_columns">Два поста в ряд</string>
+    <string name="sensitive_tap_to_show">Чувствительный контент — нажмите, чтобы показать</string>
 </resources>

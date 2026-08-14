@@ -2,6 +2,7 @@ package io.github.zalexanninev15.tokitoki.ui.feed
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,7 +14,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CircularProgressIndicator
@@ -57,9 +57,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.zalexanninev15.tokitoki.AppContainer
 import io.github.zalexanninev15.tokitoki.R
+import io.github.zalexanninev15.tokitoki.data.prefs.AppSettings
 import io.github.zalexanninev15.tokitoki.ui.components.FeedItemCard
 import io.github.zalexanninev15.tokitoki.util.copyToClipboard
 import io.github.zalexanninev15.tokitoki.util.openInCustomTab
+import io.github.zalexanninev15.tokitoki.util.sharePost
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -84,8 +86,10 @@ fun FeedScreen(
         ),
     )
     val followsLabel = stringResource(R.string.action_follows)
+    val settings by container.settingsStore.settings.collectAsStateWithLifecycle(
+        initialValue = AppSettings(),
+    )
     var longPressedTab by remember { mutableStateOf<Int?>(null) }
-    var overflowOpen by remember { mutableStateOf(false) }
     val offlineMessage by viewModel.offlineMessage.collectAsStateWithLifecycle()
     val savedTemplate = stringResource(R.string.offline_saved)
 
@@ -135,39 +139,6 @@ fun FeedScreen(
                     }
                     IconButton(onClick = { viewModel.setSearchVisible(!state.searchVisible) }) {
                         Icon(Icons.Default.Search, stringResource(R.string.search))
-                    }
-                    IconButton(onClick = { overflowOpen = true }) {
-                        Icon(Icons.Default.MoreVert, stringResource(R.string.more))
-                    }
-                    DropdownMenu(
-                        expanded = overflowOpen,
-                        onDismissRequest = { overflowOpen = false },
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.offline_save_feed)) },
-                            onClick = {
-                                overflowOpen = false
-                                val current = state.tabs.getOrNull(state.selectedTabIndex)
-                                viewModel.saveForOffline(
-                                    current?.accountLocalId,
-                                    state.tabs.mapNotNull { it.accountLocalId },
-                                )
-                            },
-                        )
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.accounts)) },
-                            onClick = {
-                                overflowOpen = false
-                                onOpenAccounts()
-                            },
-                        )
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.about_title)) },
-                            onClick = {
-                                overflowOpen = false
-                                onOpenAbout()
-                            },
-                        )
                     }
                     IconButton(onClick = onOpenAbout) {
                         Icon(Icons.Default.Info, stringResource(R.string.about_title))
@@ -309,7 +280,15 @@ fun FeedScreen(
                         contentPadding = androidx.compose.foundation.layout.PaddingValues(12.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
-                        items(state.items, key = { it.id.value }) { item ->
+                        // Rows of one or two: the list stays a LazyColumn in both modes,
+                        // so scroll state and read tracking are the same code either way.
+                        val rows = remember(state.items, settings.feedColumns) {
+                            state.items.chunked(settings.feedColumns.coerceIn(1, 2))
+                        }
+                        items(rows, key = { row -> row.first().id.value }) { row ->
+                            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                row.forEach { item ->
+                                    Box(Modifier.weight(1f)) {
                             FeedItemCard(
                                 item = item,
                                 isRead = item.id.value in state.readIds,
@@ -338,6 +317,14 @@ fun FeedScreen(
                                 },
                                 onBoost = { viewModel.boost(item) },
                                 onFavourite = { viewModel.favourite(item) },
+                                onShare = {
+                                    val body = item.displayed
+                                    context.sharePost(
+                                        authorName = body.author.displayName,
+                                        text = body.text.plain,
+                                        url = item.canonicalUrl,
+                                    )
+                                },
                                 onCopyText = {
                                     context.copyToClipboard(item.displayed.text.plain, "post text")
                                     scope.launch { snackbarHost.showSnackbar(copiedMessage) }
@@ -351,6 +338,15 @@ fun FeedScreen(
                                     modifier = Modifier.fillMaxWidth().padding(16.dp),
                                     contentAlignment = Alignment.Center,
                                 ) { CircularProgressIndicator() }
+                            }
+                        }
+                                    }
+                                }
+                                // Keeps a lone last card at half width instead of
+                                // stretching it across the row.
+                                if (row.size == 1 && settings.feedColumns == 2) {
+                                    Spacer(Modifier.weight(1f))
+                                }
                             }
                         }
                     }

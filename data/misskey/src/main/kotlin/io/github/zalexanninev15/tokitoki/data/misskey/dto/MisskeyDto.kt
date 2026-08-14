@@ -19,6 +19,7 @@ data class MisskeyUserDto(
     val host: String? = null,
     val avatarUrl: String? = null,
     val isBot: Boolean = false,
+    val emojis: Map<String, String> = emptyMap(),
 )
 
 @Serializable
@@ -57,6 +58,8 @@ data class NoteDto(
     val reactions: Map<String, Int> = emptyMap(),
     val renoteCount: Int = 0,
     val repliesCount: Int = 0,
+    /** Misskey returns shortcode -> URL directly; older forks may omit it entirely. */
+    val emojis: Map<String, String> = emptyMap(),
 ) {
     /**
      * Misskey overloads one field for two concepts: a renote with no body of its own is a

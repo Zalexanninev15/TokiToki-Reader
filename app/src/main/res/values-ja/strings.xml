@@ -107,4 +107,12 @@
     <string name="offline_save_post">投稿を保存</string>
     <string name="more">その他</string>
     <string name="copy_text">本文をコピー</string>
+    <string name="offline_title">オフライン</string>
+    <string name="offline_hint">タイムラインと画像を端末に保持します。保存した投稿はキャッシュ削除の対象になりません。</string>
+    <string name="offline_clear">保存を削除</string>
+    <string name="action_share">共有</string>
+    <string name="feed_layout">タイムラインの表示</string>
+    <string name="feed_one_column">1列表示</string>
+    <string name="feed_two_columns">2列表示</string>
+    <string name="sensitive_tap_to_show">閲覧注意 — タップして表示</string>
 </resources>

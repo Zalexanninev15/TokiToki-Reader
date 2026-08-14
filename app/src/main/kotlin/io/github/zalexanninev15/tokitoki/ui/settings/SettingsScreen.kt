@@ -21,6 +21,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -49,6 +50,7 @@ import kotlinx.coroutines.launch
 fun SettingsScreen(container: AppContainer, onBack: () -> Unit) {
     val context = LocalContext.current
     var currentLanguage by remember { mutableStateOf(LocaleController.current(context)) }
+    var offlineStatus by remember { mutableStateOf("") }
     val settings by container.settingsStore.settings
         .collectAsStateWithLifecycle(initialValue = AppSettings())
     val scope = rememberCoroutineScope()
@@ -132,6 +134,19 @@ fun SettingsScreen(container: AppContainer, onBack: () -> Unit) {
             }
 
             HorizontalDivider()
+            SectionTitle(stringResource(R.string.feed_layout))
+            listOf(
+                1 to R.string.feed_one_column,
+                2 to R.string.feed_two_columns,
+            ).forEach { (columns, labelRes) ->
+                RadioRow(
+                    label = stringResource(labelRes),
+                    selected = settings.feedColumns == columns,
+                    onSelect = { scope.launch { container.settingsStore.setFeedColumns(columns) } },
+                )
+            }
+
+            HorizontalDivider()
             SectionTitle(stringResource(R.string.language))
             listOf(
                 null to R.string.language_system,
@@ -150,6 +165,46 @@ fun SettingsScreen(container: AppContainer, onBack: () -> Unit) {
                         // resources only take effect on an explicit recreate.
                         if (needsRestart) (context as? Activity)?.recreate()
                     },
+                )
+            }
+
+            HorizontalDivider()
+            SectionTitle(stringResource(R.string.offline_title))
+            Text(
+                text = stringResource(R.string.offline_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(
+                    onClick = {
+                        scope.launch {
+                            val ids = container.feedRepository.enabledAccountIds()
+                            val result = runCatching {
+                                container.offlineRepository.saveFeed(ids)
+                            }
+                            offlineStatus = result.fold(
+                                onSuccess = { "${it.posts} / ${it.images}" },
+                                onFailure = { it.message.orEmpty() },
+                            )
+                        }
+                    },
+                ) { Text(stringResource(R.string.offline_save_feed)) }
+
+                TextButton(
+                    onClick = {
+                        scope.launch {
+                            container.offlineRepository.clearSaved()
+                            offlineStatus = ""
+                        }
+                    },
+                ) { Text(stringResource(R.string.offline_clear)) }
+            }
+            if (offlineStatus.isNotBlank()) {
+                Text(
+                    text = offlineStatus,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
 

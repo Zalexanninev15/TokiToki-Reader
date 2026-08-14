@@ -3,6 +3,7 @@ package io.github.zalexanninev15.tokitoki.util
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.net.toUri
 
@@ -26,4 +27,31 @@ fun Context.copyToClipboard(text: String, label: String = "post") {
         val manager = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         manager.setPrimaryClip(ClipData.newPlainText(label, text))
     }
+}
+
+/**
+ * Opens the system share sheet.
+ *
+ * The body is deliberately "who said it: what they said" followed by the link on its own
+ * line — that is what lands legibly in a chat, and it is what the official Mastodon
+ * client sends. A post without a public URL still shares its text rather than nothing.
+ */
+fun Context.sharePost(authorName: String, text: String, url: String?) {
+    val body = buildString {
+        append(authorName)
+        if (text.isNotBlank()) {
+            append(": ")
+            append(text)
+        }
+        if (!url.isNullOrBlank()) {
+            append("\n")
+            append(url)
+        }
+    }
+    val intent = Intent(Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        putExtra(Intent.EXTRA_TEXT, body)
+        putExtra(Intent.EXTRA_SUBJECT, authorName)
+    }
+    runCatching { startActivity(Intent.createChooser(intent, null)) }
 }

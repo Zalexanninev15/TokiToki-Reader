@@ -54,6 +54,8 @@ class MastodonPostMapper(
                 replyCount = body.repliesCount,
                 myReaction = if (dto.favourited) "\u2b50" else null,
             ),
+            customEmojis = (body.emojis + body.account.emojis)
+                .associate { it.shortcode to it.url },
         )
     }
 

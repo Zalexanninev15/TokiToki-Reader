@@ -1,10 +1,13 @@
 package io.github.zalexanninev15.tokitoki.ui.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -23,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -50,9 +54,13 @@ fun FeedItemCard(
     onBoost: (() -> Unit)? = null,
     onFavourite: (() -> Unit)? = null,
     onCopyText: (() -> Unit)? = null,
+    onShare: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     var menuOpen by remember { mutableStateOf(false) }
+    // A content warning covers the pictures too: revealing the text and being shown the
+    // image anyway defeats the point of the warning.
+    var mediaRevealed by remember(item.id.value) { mutableStateOf(item.contentWarning == null) }
     var contentWarningRevealed by remember(item.id.value) { mutableStateOf(false) }
 
     Card(
@@ -144,22 +152,52 @@ fun FeedItemCard(
                 }
             } else {
                 if (item.text.plain.isNotBlank()) {
-                    RichTextView(text = item.text, onLinkClick = onOpenLink)
+                    RichTextView(
+                        text = item.text,
+                        onLinkClick = onOpenLink,
+                        customEmojis = item.customEmojis,
+                    )
                 }
 
                 item.media.forEach { media ->
                     val url = media.previewUrl ?: media.url
                     if (url != null) {
-                        AsyncImage(
-                            model = url,
-                            contentDescription = media.description
-                                ?: stringResource(R.string.cd_image),
+                        Box(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .aspectRatio(media.aspectRatio ?: 1.6f)
                                 .clip(RoundedCornerShape(12.dp))
-                                .clickable { onOpenImage(media.url ?: url) },
-                        )
+                                .clickable {
+                                    if (mediaRevealed) onOpenImage(media.url ?: url)
+                                    else mediaRevealed = true
+                                },
+                        ) {
+                            AsyncImage(
+                                model = url,
+                                contentDescription = media.description
+                                    ?: stringResource(R.string.cd_image),
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    // Blur rather than hide: the shape of the post stays
+                                    // the same whether or not it is revealed, so the feed
+                                    // does not jump when something is tapped open.
+                                    .then(if (mediaRevealed) Modifier else Modifier.blur(24.dp)),
+                            )
+                            if (!mediaRevealed) {
+                                Text(
+                                    text = stringResource(R.string.sensitive_tap_to_show),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    modifier = Modifier
+                                        .align(Alignment.Center)
+                                        .background(
+                                            MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
+                                            RoundedCornerShape(8.dp),
+                                        )
+                                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -184,10 +222,12 @@ fun FeedItemCard(
                             onClick = { menuOpen = false; copy() },
                         )
                     }
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.copy_link)) },
-                        onClick = { menuOpen = false; onCopyLink(item.canonicalUrl) },
-                    )
+                    onShare?.let { share ->
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.action_share)) },
+                            onClick = { menuOpen = false; share() },
+                        )
+                    }
                 }
             }
         }

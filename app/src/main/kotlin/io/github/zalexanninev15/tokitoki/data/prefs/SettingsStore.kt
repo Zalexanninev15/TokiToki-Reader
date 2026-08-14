@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import io.github.zalexanninev15.tokitoki.ui.theme.FontSize
@@ -19,6 +20,8 @@ data class AppSettings(
     val dynamicColor: Boolean = true,
     /** Null means follow the system locale. */
     val languageTag: String? = null,
+    /** Posts per row in the feed. One by default; two turns it into a card grid. */
+    val feedColumns: Int = 1,
 )
 
 class SettingsStore(private val context: Context) {
@@ -28,6 +31,7 @@ class SettingsStore(private val context: Context) {
         val FONT = stringPreferencesKey("font_size")
         val DYNAMIC = booleanPreferencesKey("dynamic_color")
         val LANGUAGE = stringPreferencesKey("language_tag")
+        val COLUMNS = intPreferencesKey("feed_columns")
     }
 
     val settings: Flow<AppSettings> = context.dataStore.data.map(::read)
@@ -41,6 +45,7 @@ class SettingsStore(private val context: Context) {
         } ?: FontSize.NORMAL,
         dynamicColor = prefs[Keys.DYNAMIC] ?: true,
         languageTag = prefs[Keys.LANGUAGE]?.takeIf { it.isNotBlank() },
+        feedColumns = (prefs[Keys.COLUMNS] ?: 1).coerceIn(1, 2),
     )
 
     suspend fun setTheme(mode: ThemeMode) = context.dataStore.edit { it[Keys.THEME] = mode.name }
@@ -49,6 +54,10 @@ class SettingsStore(private val context: Context) {
 
     suspend fun setDynamicColor(enabled: Boolean) =
         context.dataStore.edit { it[Keys.DYNAMIC] = enabled }
+
+    suspend fun setFeedColumns(columns: Int) = context.dataStore.edit {
+        it[Keys.COLUMNS] = columns.coerceIn(1, 2)
+    }
 
     suspend fun setLanguage(tag: String?) = context.dataStore.edit {
         if (tag == null) it.remove(Keys.LANGUAGE) else it[Keys.LANGUAGE] = tag

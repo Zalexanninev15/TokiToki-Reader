@@ -45,6 +45,7 @@ class MisskeyPostMapper(
                 replyCount = body.repliesCount,
                 myReaction = dto.myReaction,
             ),
+            customEmojis = body.emojis + body.user.emojis,
         )
     }
 

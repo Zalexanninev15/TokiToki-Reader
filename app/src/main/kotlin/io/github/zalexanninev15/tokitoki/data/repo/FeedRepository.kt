@@ -87,6 +87,9 @@ class FeedRepository(
         failures
     }
 
+    /** Ids of accounts the user has switched on, for callers that act on all of them. */
+    suspend fun enabledAccountIds(): List<String> = accountDao.enabled().map { it.localId }
+
     suspend fun loadMore(): List<SourceError> = coroutineScope {
         val enabled = accountDao.enabled()
         var candidates = enabled.filterNot { it.localId in exhausted }
