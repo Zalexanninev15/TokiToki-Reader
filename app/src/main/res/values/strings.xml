@@ -105,4 +105,5 @@
     <string name="offline_save_feed">Save for offline</string>
     <string name="offline_saved">Saved %1$s posts, %2$s images</string>
     <string name="offline_save_post">Save post</string>
+    <string name="more">More</string>
 </resources>

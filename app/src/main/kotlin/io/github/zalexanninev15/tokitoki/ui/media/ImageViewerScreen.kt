@@ -1,6 +1,7 @@
 package io.github.zalexanninev15.tokitoki.ui.media
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -55,12 +56,29 @@ fun ImageViewerScreen(
     var scale by remember { mutableFloatStateOf(1f) }
     var offset by remember { mutableStateOf(Offset.Zero) }
     var dismissDrag by remember { mutableFloatStateOf(0f) }
+    // popBackStack() is not idempotent: a second dismiss pops the feed as well and
+    // leaves an empty back stack, which is why two quick swipes emptied the screen.
+    var closed by remember { mutableStateOf(false) }
+    val closeOnce = {
+        if (!closed) {
+            closed = true
+            onClose()
+        }
+    }
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val snackbar = remember { SnackbarHostState() }
     val savedMessage = stringResource(R.string.image_saved)
     val failedMessage = stringResource(R.string.image_save_failed)
+
+    val saveImage = {
+        scope.launch {
+            val result = Downloads.saveImage(context, url)
+            snackbar.showSnackbar(if (result.isSuccess) savedMessage else failedMessage)
+        }
+        Unit
+    }
 
     Box(
         modifier = Modifier
@@ -74,16 +92,21 @@ fun ImageViewerScreen(
                     offset = if (scale > 1f) offset + pan else Offset.Zero
                 }
             }
-            // Drag down to dismiss, but only at 1x: while zoomed in a vertical drag
-            // means "pan", and stealing it would make the image impossible to explore.
+            .pointerInput(url) {
+                detectTapGestures(onLongPress = { saveImage() })
+            }
+            // Drag to dismiss, but only at 1x: while zoomed in a vertical drag means
+            // "pan", and stealing it would make the image impossible to explore.
             .pointerInput(Unit) {
                 detectVerticalDragGestures(
                     onDragEnd = {
-                        if (dismissDrag > 220f) onClose() else dismissDrag = 0f
+                        // Either direction closes: dragging a photo up to dismiss is as
+                        // common a reflex as dragging it down.
+                        if (kotlin.math.abs(dismissDrag) > 200f) closeOnce() else dismissDrag = 0f
                     },
                     onDragCancel = { dismissDrag = 0f },
                 ) { _, delta ->
-                    if (scale <= 1f) dismissDrag = (dismissDrag + delta).coerceAtLeast(0f)
+                    if (scale <= 1f) dismissDrag += delta
                 }
             },
         contentAlignment = Alignment.Center,
@@ -125,7 +148,7 @@ fun ImageViewerScreen(
                     translationY = offset.y + dismissDrag,
                     // Fades out as it is dragged away, so the gesture feels connected
                     // to the result instead of snapping at a threshold.
-                    alpha = (1f - dismissDrag / 600f).coerceIn(0.3f, 1f),
+                    alpha = (1f - kotlin.math.abs(dismissDrag) / 600f).coerceIn(0.3f, 1f),
                 ),
         )
 
@@ -137,19 +160,10 @@ fun ImageViewerScreen(
                 .windowInsetsPadding(WindowInsets.systemBars)
                 .padding(12.dp),
         ) {
-            IconButton(
-                onClick = {
-                    scope.launch {
-                        val result = Downloads.saveImage(context, url)
-                        snackbar.showSnackbar(
-                            if (result.isSuccess) savedMessage else failedMessage,
-                        )
-                    }
-                },
-            ) {
+            IconButton(onClick = saveImage) {
                 Icon(Icons.Default.Download, stringResource(R.string.action_save), tint = Color.White)
             }
-            IconButton(onClick = onClose) {
+            IconButton(onClick = closeOnce) {
                 Icon(Icons.Default.Close, stringResource(R.string.cd_close), tint = Color.White)
             }
         }

@@ -102,4 +102,5 @@
     <string name="offline_save_feed">Сохранить для офлайна</string>
     <string name="offline_saved">Сохранено постов: %1$s, изображений: %2$s</string>
     <string name="offline_save_post">Сохранить пост</string>
+    <string name="more">Ещё</string>
 </resources>

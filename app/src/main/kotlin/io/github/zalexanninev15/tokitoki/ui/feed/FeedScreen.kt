@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CircularProgressIndicator
@@ -81,6 +82,7 @@ fun FeedScreen(
     )
     val followsLabel = stringResource(R.string.action_follows)
     var longPressedTab by remember { mutableStateOf<Int?>(null) }
+    var overflowOpen by remember { mutableStateOf(false) }
     val offlineMessage by viewModel.offlineMessage.collectAsStateWithLifecycle()
     val savedTemplate = stringResource(R.string.offline_saved)
 
@@ -130,6 +132,39 @@ fun FeedScreen(
                     }
                     IconButton(onClick = { viewModel.setSearchVisible(!state.searchVisible) }) {
                         Icon(Icons.Default.Search, stringResource(R.string.search))
+                    }
+                    IconButton(onClick = { overflowOpen = true }) {
+                        Icon(Icons.Default.MoreVert, stringResource(R.string.more))
+                    }
+                    DropdownMenu(
+                        expanded = overflowOpen,
+                        onDismissRequest = { overflowOpen = false },
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.offline_save_feed)) },
+                            onClick = {
+                                overflowOpen = false
+                                val current = state.tabs.getOrNull(state.selectedTabIndex)
+                                viewModel.saveForOffline(
+                                    current?.accountLocalId,
+                                    state.tabs.mapNotNull { it.accountLocalId },
+                                )
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.accounts)) },
+                            onClick = {
+                                overflowOpen = false
+                                onOpenAccounts()
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.about_title)) },
+                            onClick = {
+                                overflowOpen = false
+                                onOpenAbout()
+                            },
+                        )
                     }
                     IconButton(onClick = onOpenAbout) {
                         Icon(Icons.Default.Info, stringResource(R.string.about_title))
