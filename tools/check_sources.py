@@ -15,7 +15,9 @@ minutes, and a mangled import wastes all of it.
   7. common Compose/coroutine functions used without their import
   8. a local val/var used earlier in the same function than it is declared — Kotlin
      requires declaration first, and moving a block around is an easy way to break it
-  9. Android string resources with characters aapt rejects — an unescaped apostrophe
+ 9. unbalanced braces or parentheses — a block moved by a script is the usual cause,
+     and the compiler reports it as "Expecting a top level declaration" far from the edit
+ 10. Android string resources with characters aapt rejects — an unescaped apostrophe
      fails resource compilation, not Kotlin compilation, so nothing above would see it — these start with a
      lowercase letter, so the checks above skip them, and a missing one is exactly what
      a scripted import insertion gets wrong
@@ -153,6 +155,19 @@ def main() -> int:
             if re.search(r"^\s*(?:private |internal )?fun\s+" + symbol + r"\b", text, re.M):
                 continue
             problems.append(f"{rel}: {symbol}() used without importing {expected}")
+
+        # Character literals first: a line like `'"' -> ...` would otherwise open a
+        # phantom string and swallow the rest of the file.
+        stripped = re.sub(r"'(?:\\.|[^'\\\n])'", "''", text)
+        stripped = re.sub(r'"""(?:.|\n)*?"""', '""', stripped)
+        stripped = re.sub(r'"(?:\\.|[^"\\\n])*"', '""', stripped)
+        stripped = re.sub(r"//.*$", "", stripped, flags=re.M)
+        stripped = re.sub(r"/\*(?:.|\n)*?\*/", "", stripped)
+        for opener, closer, label in (("{", "}", "braces"), ("(", ")", "parentheses")):
+            balance = stripped.count(opener) - stripped.count(closer)
+            if balance != 0:
+                problems.append(
+                    f"{rel}: unbalanced {label} ({balance:+d})")
 
         for match in re.finditer(r"^(?:private |internal )?fun\s+\w+\s*\(", text, re.M):
             # Walk the parameter list by paren depth first: default values like

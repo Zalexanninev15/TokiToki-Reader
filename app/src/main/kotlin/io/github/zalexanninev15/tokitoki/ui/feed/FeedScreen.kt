@@ -277,59 +277,73 @@ fun FeedScreen(
                     else -> LazyColumn(
                         state = pageListState,
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(12.dp),
+                        contentPadding = PaddingValues(12.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
-                        // Rows of one or two: the list stays a LazyColumn in both modes,
-                        // so scroll state and read tracking are the same code either way.
-                        val rows = remember(state.items, settings.feedColumns) {
-                            state.items.chunked(settings.feedColumns.coerceIn(1, 2))
-                        }
+                        // Rows of one or two cards. The feed stays a LazyColumn in both
+                        // modes, so scroll state and read tracking are the same code.
+                        val rows = state.items.chunked(settings.feedColumns.coerceIn(1, 2))
+
                         items(rows, key = { row -> row.first().id.value }) { row ->
                             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                                 row.forEach { item ->
                                     Box(Modifier.weight(1f)) {
-                            FeedItemCard(
-                                item = item,
-                                isRead = item.id.value in state.readIds,
-                                // Only in the merged view: on a per-account tab the
-                                // source is already the tab you are looking at.
-                                sourceLabel = if (state.selectedTabIndex == 0) {
-                                    state.sourceLabels[item.id.accountLocalId]
-                                } else {
-                                    null
-                                },
-                                onOpenLink = { url -> context.openInCustomTab(url) },
-                                onCopyLink = { url ->
-                                    if (url != null) {
-                                        context.copyToClipboard(url)
-                                        scope.launch { snackbarHost.showSnackbar(copiedMessage) }
+                                        FeedItemCard(
+                                            item = item,
+                                            isRead = item.id.value in state.readIds,
+                                            // Only in the merged view: on a per-account
+                                            // tab the source is the tab you are on.
+                                            sourceLabel = if (state.selectedTabIndex == 0) {
+                                                state.sourceLabels[item.id.accountLocalId]
+                                            } else {
+                                                null
+                                            },
+                                            onOpenLink = { url -> context.openInCustomTab(url) },
+                                            onCopyLink = { url ->
+                                                if (url != null) {
+                                                    context.copyToClipboard(url)
+                                                    scope.launch {
+                                                        snackbarHost.showSnackbar(copiedMessage)
+                                                    }
+                                                }
+                                            },
+                                            onOpenImage = onOpenImage,
+                                            onOpenProfile = onOpenProfile,
+                                            onReply = {
+                                                onReply(
+                                                    item.id.accountLocalId,
+                                                    item.id.remoteId,
+                                                    item.author.handle,
+                                                )
+                                            },
+                                            onBoost = { viewModel.boost(item) },
+                                            onFavourite = { viewModel.favourite(item) },
+                                            onShare = {
+                                                val body = item.displayed
+                                                context.sharePost(
+                                                    authorName = body.author.displayName,
+                                                    text = body.text.plain,
+                                                    url = item.canonicalUrl,
+                                                )
+                                            },
+                                            onCopyText = {
+                                                context.copyToClipboard(
+                                                    item.displayed.text.plain,
+                                                    "post text",
+                                                )
+                                                scope.launch {
+                                                    snackbarHost.showSnackbar(copiedMessage)
+                                                }
+                                            },
+                                        )
                                     }
-                                },
-                                onOpenImage = onOpenImage,
-                                onOpenProfile = onOpenProfile,
-                                onReply = {
-                                    onReply(
-                                        item.id.accountLocalId,
-                                        item.id.remoteId,
-                                        item.author.handle,
-                                    )
-                                },
-                                onBoost = { viewModel.boost(item) },
-                                onFavourite = { viewModel.favourite(item) },
-                                onShare = {
-                                    val body = item.displayed
-                                    context.sharePost(
-                                        authorName = body.author.displayName,
-                                        text = body.text.plain,
-                                        url = item.canonicalUrl,
-                                    )
-                                },
-                                onCopyText = {
-                                    context.copyToClipboard(item.displayed.text.plain, "post text")
-                                    scope.launch { snackbarHost.showSnackbar(copiedMessage) }
-                                },
-                            )
+                                }
+                                // Keeps a lone final card at half width rather than
+                                // stretching it across the whole row.
+                                if (row.size == 1 && settings.feedColumns == 2) {
+                                    Spacer(Modifier.weight(1f))
+                                }
+                            }
                         }
 
                         if (state.isLoadingMore) {
@@ -338,15 +352,6 @@ fun FeedScreen(
                                     modifier = Modifier.fillMaxWidth().padding(16.dp),
                                     contentAlignment = Alignment.Center,
                                 ) { CircularProgressIndicator() }
-                            }
-                        }
-                                    }
-                                }
-                                // Keeps a lone last card at half width instead of
-                                // stretching it across the row.
-                                if (row.size == 1 && settings.feedColumns == 2) {
-                                    Spacer(Modifier.weight(1f))
-                                }
                             }
                         }
                     }
