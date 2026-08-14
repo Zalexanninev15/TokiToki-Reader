@@ -84,14 +84,6 @@ fun FeedScreen(
     val offlineMessage by viewModel.offlineMessage.collectAsStateWithLifecycle()
     val savedTemplate = stringResource(R.string.offline_saved)
 
-    LaunchedEffect(offlineMessage) {
-        val message = offlineMessage ?: return@LaunchedEffect
-        val text = message.split('/').let { parts ->
-            if (parts.size == 2) savedTemplate.format(parts[0], parts[1]) else message
-        }
-        snackbarHost.showSnackbar(text)
-        viewModel.consumeOfflineMessage()
-    }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val pagerState = rememberPagerState(pageCount = { state.tabs.size.coerceAtLeast(1) })
 
@@ -101,6 +93,15 @@ fun FeedScreen(
 
     val context = LocalContext.current
     val snackbarHost = remember { SnackbarHostState() }
+
+    LaunchedEffect(offlineMessage) {
+        val message = offlineMessage ?: return@LaunchedEffect
+        val text = message.split('/').let { parts ->
+            if (parts.size == 2) savedTemplate.format(parts[0], parts[1]) else message
+        }
+        snackbarHost.showSnackbar(text)
+        viewModel.consumeOfflineMessage()
+    }
     val scope = rememberCoroutineScope()
 
     val copiedMessage = stringResource(R.string.link_copied)

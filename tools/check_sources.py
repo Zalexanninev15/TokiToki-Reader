@@ -13,7 +13,9 @@ minutes, and a mangled import wastes all of it.
   6. project top-level functions used from another file without an import, and any use
      of a private top-level function outside the file that declares it
   7. common Compose/coroutine functions used without their import
-  8. Android string resources with characters aapt rejects — an unescaped apostrophe
+  8. a local val/var used earlier in the same function than it is declared — Kotlin
+     requires declaration first, and moving a block around is an easy way to break it
+  9. Android string resources with characters aapt rejects — an unescaped apostrophe
      fails resource compilation, not Kotlin compilation, so nothing above would see it — these start with a
      lowercase letter, so the checks above skip them, and a missing one is exactly what
      a scripted import insertion gets wrong
@@ -151,6 +153,46 @@ def main() -> int:
             if re.search(r"^\s*(?:private |internal )?fun\s+" + symbol + r"\b", text, re.M):
                 continue
             problems.append(f"{rel}: {symbol}() used without importing {expected}")
+
+        for match in re.finditer(r"^(?:private |internal )?fun\s+\w+\s*\(", text, re.M):
+            # Walk the parameter list by paren depth first: default values like
+            # `onClick: () -> Unit = {}` contain braces, and taking the first brace after
+            # `fun` lands inside the signature instead of the body.
+            index, depth = text.index("(", match.start()), 0
+            while index < len(text):
+                if text[index] == "(":
+                    depth += 1
+                elif text[index] == ")":
+                    depth -= 1
+                    if depth == 0:
+                        break
+                index += 1
+            brace = text.find("{", index)
+            if brace < 0:
+                continue
+
+            depth, cursor = 0, brace
+            while cursor < len(text):
+                if text[cursor] == "{":
+                    depth += 1
+                elif text[cursor] == "}":
+                    depth -= 1
+                    if depth == 0:
+                        break
+                cursor += 1
+            body = text[brace:cursor]
+
+            offsets = {}
+            for decl in re.finditer(r"^    (?:val|var)\s+(\w+)\b", body, re.M):
+                offsets.setdefault(decl.group(1), decl.start())
+            for name, declared_at in offsets.items():
+                earlier = body[:declared_at]
+                cleaned = re.sub(r'"[^"\n]*"', '""', earlier)
+                cleaned = re.sub(r"//.*$", "", cleaned, flags=re.M)
+                if re.search(r"(?<![\w.])" + re.escape(name) + r"(?![\w])", cleaned):
+                    line = text[:brace + declared_at].count("\n") + 1
+                    problems.append(
+                        f"{rel}:{line}: {name} is used before it is declared")
 
         if "${'$'}" in text:
             problems.append(f"{rel}: literal \"${{'$'}}\" left in source")
