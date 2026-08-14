@@ -40,7 +40,16 @@ class FeedRepository(
 
     /** Per-account pagination cursors, kept in memory: they are cheap to rebuild. */
     private val cursors = mutableMapOf<String, PageCursor?>()
+    /**
+     * Accounts with no further pages.
+     *
+     * Not permanent: a single empty page used to retire an account until the next full
+     * refresh, and one hiccup from an instance meant the feed simply stopped growing.
+     * [retryExhausted] gives them another chance when the user asks for more and every
+     * source claims to be finished.
+     */
     private val exhausted = mutableSetOf<String>()
+    private var retriedAfterExhaustion = false
 
     fun observeFeed(accountIds: List<String>): Flow<List<FeedItem>> =
         feedDao.observeFeed(accountIds)
@@ -65,6 +74,7 @@ class FeedRepository(
     suspend fun refresh(): List<SourceError> = coroutineScope {
         cursors.clear()
         exhausted.clear()
+        retriedAfterExhaustion = false
         val accounts = accountDao.enabled()
 
         val failures = accounts.map { account ->
@@ -78,8 +88,19 @@ class FeedRepository(
     }
 
     suspend fun loadMore(): List<SourceError> = coroutineScope {
-        accountDao.enabled()
-            .filterNot { it.localId in exhausted }
+        val enabled = accountDao.enabled()
+        var candidates = enabled.filterNot { it.localId in exhausted }
+
+        // Everything claims to be finished: give it one more attempt before the feed
+        // stops growing for good. A single empty page from one instance should not be
+        // the end of the timeline.
+        if (candidates.isEmpty() && !retriedAfterExhaustion) {
+            retriedAfterExhaustion = true
+            exhausted.clear()
+            candidates = enabled
+        }
+
+        candidates
             .map { account ->
                 async { runCatching { loadInto(account, cursors[account.localId]) }.exceptionOrNull() }
             }

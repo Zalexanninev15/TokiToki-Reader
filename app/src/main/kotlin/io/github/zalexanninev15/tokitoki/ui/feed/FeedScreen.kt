@@ -39,12 +39,14 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -58,6 +60,7 @@ import io.github.zalexanninev15.tokitoki.R
 import io.github.zalexanninev15.tokitoki.ui.components.FeedItemCard
 import io.github.zalexanninev15.tokitoki.util.copyToClipboard
 import io.github.zalexanninev15.tokitoki.util.openInCustomTab
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -247,32 +250,44 @@ fun FeedScreen(
             ) { page ->
             val pageListState = rememberLazyListState()
 
-        // Visibility reporting. layoutInfo already knows how much of each item is on screen,
-        // so the fraction is derived from it rather than from per-item position callbacks,
-        // which would fire far more often for the same information.
-        LaunchedEffect(pageListState, state.items) {
-            snapshotFlow { pageListState.layoutInfo }.collect { info ->
-                val viewportStart = info.viewportStartOffset
-                val viewportEnd = info.viewportEndOffset
-                info.visibleItemsInfo.forEach { visible ->
-                    val item = state.items.getOrNull(visible.index) ?: return@forEach
-                    if (visible.size <= 0) return@forEach
-                    val top = visible.offset.coerceAtLeast(viewportStart)
-                    val bottom = (visible.offset + visible.size).coerceAtMost(viewportEnd)
-                    val fraction = ((bottom - top).toFloat() / visible.size).coerceIn(0f, 1f)
-                    viewModel.onVisibility(item.id, fraction)
+        // Visibility reporting, polled twice a second instead of on every frame.
+        //
+        // The old version collected snapshotFlow { layoutInfo }, which emits on every
+        // scroll frame, and rebuilt the whole visible-item list each time — sixty times a
+        // second, restarted on every Room update. Polling matches what read tracking
+        // actually needs: an item only counts once it has been still for a while, so
+        // sampling while the list is at rest is both cheaper and more correct.
+        val items by rememberUpdatedState(state.items)
+        LaunchedEffect(pageListState) {
+            while (true) {
+                if (!pageListState.isScrollInProgress) {
+                    val info = pageListState.layoutInfo
+                    val viewportStart = info.viewportStartOffset
+                    val viewportEnd = info.viewportEndOffset
+                    info.visibleItemsInfo.forEach { visible ->
+                        val item = items.getOrNull(visible.index) ?: return@forEach
+                        if (visible.size <= 0) return@forEach
+                        val top = visible.offset.coerceAtLeast(viewportStart)
+                        val bottom = (visible.offset + visible.size).coerceAtMost(viewportEnd)
+                        val fraction = ((bottom - top).toFloat() / visible.size).coerceIn(0f, 1f)
+                        viewModel.onVisibility(item.id, fraction)
+                    }
                 }
+                delay(500)
             }
         }
 
-        // Infinite scroll: request the next page while a screenful still remains.
-        LaunchedEffect(pageListState) {
-            snapshotFlow {
-                val last = pageListState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
-                last to pageListState.layoutInfo.totalItemsCount
-            }.collect { (last, total) ->
-                if (total > 0 && last >= total - 5) viewModel.loadMore()
+        // Infinite scroll. derivedStateOf keeps this from waking on every scroll frame:
+        // it only re-evaluates when the boolean itself flips.
+        val shouldLoadMore by remember(pageListState) {
+            derivedStateOf {
+                val info = pageListState.layoutInfo
+                val last = info.visibleItemsInfo.lastOrNull()?.index ?: return@derivedStateOf false
+                info.totalItemsCount > 0 && last >= info.totalItemsCount - 5
             }
+        }
+        LaunchedEffect(shouldLoadMore) {
+            if (shouldLoadMore) viewModel.loadMore()
         }
 
             PullToRefreshBox(
@@ -323,6 +338,10 @@ fun FeedScreen(
                                 },
                                 onBoost = { viewModel.boost(item) },
                                 onFavourite = { viewModel.favourite(item) },
+                                onCopyText = {
+                                    context.copyToClipboard(item.displayed.text.plain, "post text")
+                                    scope.launch { snackbarHost.showSnackbar(copiedMessage) }
+                                },
                             )
                         }
 

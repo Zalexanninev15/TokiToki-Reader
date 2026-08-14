@@ -9,13 +9,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -51,8 +49,10 @@ fun FeedItemCard(
     onReply: (() -> Unit)? = null,
     onBoost: (() -> Unit)? = null,
     onFavourite: (() -> Unit)? = null,
+    onCopyText: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
+    var menuOpen by remember { mutableStateOf(false) }
     var contentWarningRevealed by remember(item.id.value) { mutableStateOf(false) }
 
     Card(
@@ -164,35 +164,6 @@ fun FeedItemCard(
                 }
             }
 
-            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                val canonical = item.canonicalUrl
-                TextButton(
-                    onClick = { canonical?.let(onOpenLink) },
-                    enabled = canonical != null,
-                ) {
-                    Icon(Icons.Default.OpenInNew, contentDescription = null, Modifier.size(18.dp))
-                    Text(
-                        text = stringResource(R.string.open_original),
-                        modifier = Modifier.padding(start = 6.dp),
-                    )
-                }
-                TextButton(
-                    onClick = { onCopyLink(canonical) },
-                    // Disabled rather than silently copying nothing: a private Telegram
-                    // channel genuinely has no shareable URL.
-                    enabled = canonical != null,
-                    modifier = Modifier.semantics {
-                        contentDescription = "Copy link to post"
-                    },
-                ) {
-                    Icon(Icons.Default.ContentCopy, contentDescription = null, Modifier.size(18.dp))
-                    Text(
-                        text = stringResource(R.string.copy_link),
-                        modifier = Modifier.padding(start = 6.dp),
-                    )
-                }
-            }
-
             // Only when the source supports it and the screen supplied handlers: the
             // profile view reuses this card in read-only mode.
             val interactions = item.interactions
@@ -202,7 +173,22 @@ fun FeedItemCard(
                     onReply = onReply,
                     onBoost = onBoost,
                     onFavourite = onFavourite,
+                    onOpen = item.canonicalUrl?.let { url -> { onOpenLink(url) } },
+                    onCopy = { onCopyLink(item.canonicalUrl) },
+                    onMore = { menuOpen = true },
                 )
+                DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                    onCopyText?.let { copy ->
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.copy_text)) },
+                            onClick = { menuOpen = false; copy() },
+                        )
+                    }
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.copy_link)) },
+                        onClick = { menuOpen = false; onCopyLink(item.canonicalUrl) },
+                    )
+                }
             }
         }
     }

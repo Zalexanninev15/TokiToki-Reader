@@ -96,6 +96,9 @@ fun TokiTokiNavHost(
                 onBack = { navController.popBackStack() },
                 onAddAccount = { navController.navigate(Routes.ADD_ACCOUNT) },
                 onOpenFollows = { id -> navController.navigate(Routes.follows(id)) },
+                onOpenProfile = { accountId, userId ->
+                    navController.navigate(Routes.profile(accountId, userId))
+                },
             )
         }
 

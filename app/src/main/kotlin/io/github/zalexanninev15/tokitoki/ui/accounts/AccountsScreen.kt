@@ -1,5 +1,6 @@
 package io.github.zalexanninev15.tokitoki.ui.accounts
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -47,6 +48,8 @@ fun AccountsScreen(
     onBack: () -> Unit,
     onAddAccount: () -> Unit,
     onOpenFollows: (String) -> Unit = {},
+    /** (accountLocalId, remoteUserId) — opens the user's own profile. */
+    onOpenProfile: (String, String) -> Unit = { _, _ -> },
 ) {
     val accounts by container.feedRepository.observeAccounts()
         .map { it }
@@ -96,7 +99,14 @@ fun AccountsScreen(
                                     R.string.cd_avatar,
                                     account.displayName,
                                 ),
-                                modifier = Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)),
+                                modifier = Modifier
+                                    .size(44.dp)
+                                    .clip(RoundedCornerShape(14.dp))
+                                    // Tapping your own avatar opens your own profile,
+                                    // which is where people look for it first.
+                                    .clickable(enabled = account.remoteUserId.isNotBlank()) {
+                                        onOpenProfile(account.localId, account.remoteUserId)
+                                    },
                             )
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(account.displayName, style = MaterialTheme.typography.titleMedium)
