@@ -56,6 +56,47 @@ FUNCTION_IMPORTS = {
     "toUri": "androidx.core.net",
 }
 
+# Capitalised Compose entry points. They look like types, so the project-type check skips
+# them, and they are the single most common thing a scripted import insertion misses.
+COMPOSE_IMPORTS = {
+    "Row": "androidx.compose.foundation.layout",
+    "Column": "androidx.compose.foundation.layout",
+    "Box": "androidx.compose.foundation.layout",
+    "Spacer": "androidx.compose.foundation.layout",
+    "PaddingValues": "androidx.compose.foundation.layout",
+    "Arrangement": "androidx.compose.foundation.layout",
+    "LazyColumn": "androidx.compose.foundation.lazy",
+    "LazyRow": "androidx.compose.foundation.lazy",
+    "HorizontalPager": "androidx.compose.foundation.pager",
+    "SelectionContainer": "androidx.compose.foundation.text.selection",
+    "InlineTextContent": "androidx.compose.foundation.text",
+    "Text": "androidx.compose.material3",
+    "Icon": "androidx.compose.material3",
+    "IconButton": "androidx.compose.material3",
+    "TextButton": "androidx.compose.material3",
+    "Card": "androidx.compose.material3",
+    "Scaffold": "androidx.compose.material3",
+    "TopAppBar": "androidx.compose.material3",
+    "DropdownMenu": "androidx.compose.material3",
+    "DropdownMenuItem": "androidx.compose.material3",
+    "FilterChip": "androidx.compose.material3",
+    "RadioButton": "androidx.compose.material3",
+    "OutlinedTextField": "androidx.compose.material3",
+    "CircularProgressIndicator": "androidx.compose.material3",
+    "SnackbarHost": "androidx.compose.material3",
+    "SnackbarHostState": "androidx.compose.material3",
+    "FloatingActionButton": "androidx.compose.material3",
+    "HorizontalDivider": "androidx.compose.material3",
+    "MaterialTheme": "androidx.compose.material3",
+    "ScrollableTabRow": "androidx.compose.material3",
+    "TabRow": "androidx.compose.material3",
+    "Tab": "androidx.compose.material3",
+    "AsyncImage": "coil.compose",
+    "SubcomposeAsyncImage": "coil.compose",
+    "Placeholder": "androidx.compose.ui.text",
+    "PlaceholderVerticalAlign": "androidx.compose.ui.text",
+}
+
 def kotlin_sources():
     for root in ("app/src", "domain/src", "data"):
         yield from (ROOT / root).rglob("*.kt")
@@ -141,6 +182,18 @@ def main() -> int:
             elif f"{fun_package}.{name}" not in {fq for fq, _ in imports} and \
                     f"{fun_package}.*" not in {fq for fq, _ in imports}:
                 problems.append(f"{rel}: {name}() used without importing {fun_package}.{name}")
+
+        for symbol, package in COMPOSE_IMPORTS.items():
+            if not re.search(r"(?<![\w.])" + symbol + r"\s*[({]", code):
+                continue
+            expected = f"{package}.{symbol}"
+            if expected in {fq for fq, _ in imports}:
+                continue
+            if f"{package}.*" in {fq for fq, _ in imports}:
+                continue
+            if symbol in pkg_types.get(package, ()):
+                continue
+            problems.append(f"{rel}: {symbol} used without importing {expected}")
 
         for symbol, package in FUNCTION_IMPORTS.items():
             if not re.search(r"(?<![\w.])" + symbol + r"\s*[({<]", code):
