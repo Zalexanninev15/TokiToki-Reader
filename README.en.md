@@ -1,7 +1,7 @@
 # TokiToki Reader
 
 ![platform](https://img.shields.io/badge/platform-Android_8.0%2B-3DDC84.svg?logo=android)
-![version](https://img.shields.io/badge/version-0.4_alpha-orange)
+![version](https://img.shields.io/badge/version-0.5_alpha-orange)
 ![license](https://img.shields.io/badge/license-MIT-blue)
 
 [Русский](README.md) · **English** · [日本語](README.ja.md)
@@ -9,7 +9,7 @@
 A reader for Mastodon and Misskey timelines in one app. A merged feed, a tab per account, and read-state pushed back to the server wherever that is possible at all.
 
 > [!WARNING]
-> Version 0.4 alpha. Plenty is missing and some of it is rough. Telegram is not supported yet.
+> Version 0.5 alpha. Plenty is missing and some of it is rough. Telegram is not supported yet.
 
 ## Features
 

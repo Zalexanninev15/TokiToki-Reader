@@ -7,3 +7,9 @@ local.properties
 .idea/
 *.iml
 .DS_Store
+
+# TDLib build output, produced by the `build tdlib` workflow
+data/telegram/src/main/jniLibs/*
+!data/telegram/src/main/jniLibs/.gitkeep
+data/telegram/src/main/java/*
+!data/telegram/src/main/java/.gitkeep

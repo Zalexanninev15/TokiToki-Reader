@@ -99,3 +99,15 @@ jobs:
           name: tdlib-android-${{ steps.commit.outputs.sha }}
           path: td/example/android/tdlib/tdlib.zip
           if-no-files-found: error
+
+      # Lays the bundle out the way :data:telegram expects, so the next step is a copy
+      # rather than a guess about which directory goes where.
+      - name: Show the layout :data:telegram expects
+        working-directory: td/example/android
+        run: |
+          echo "Unpack tdlib.zip and place:"
+          echo "  libs/<abi>/libtdjson.so  -> data/telegram/src/main/jniLibs/<abi>/"
+          echo "  java/org/drinkless/...   -> data/telegram/src/main/java/org/drinkless/"
+          echo
+          echo "Actual contents:"
+          find tdlib -maxdepth 3 -type d | sort

@@ -1,7 +1,7 @@
 # TokiToki Reader
 
 ![platform](https://img.shields.io/badge/platform-Android_8.0%2B-3DDC84.svg?logo=android)
-![version](https://img.shields.io/badge/version-0.4_alpha-orange)
+![version](https://img.shields.io/badge/version-0.5_alpha-orange)
 ![license](https://img.shields.io/badge/license-MIT-blue)
 
 [Русский](README.md) · [English](README.en.md) · **日本語**
@@ -9,7 +9,7 @@
 Mastodon と Misskey のタイムラインをひとつのアプリで読むためのリーダーです。統合タイムライン、アカウントごとのタブ、そして可能な範囲でサーバーへ既読を反映します。
 
 > [!WARNING]
-> バージョン 0.4 alpha。未実装の機能が多く、粗い部分もあります。Telegram には未対応です。
+> バージョン 0.5 alpha。未実装の機能が多く、粗い部分もあります。Telegram には未対応です。
 
 ## 機能
 

@@ -199,10 +199,23 @@ Actions → **build tdlib** → Run workflow. Занимает 40–90 мину�
 На выходе — артефакт `tdlib-android-<sha>` с `tdlib.zip`, внутри `libs/` с `.so` под
 четыре ABI и `java/` с биндингами.
 
+### Куда класть результат
+
+Модуль `:data:telegram` уже есть и собирается — пустой, без единой ссылки на `TdApi`.
+Он ждёт содержимого из `tdlib.zip`:
+
+```
+libs/<abi>/libtdjson.so  ->  data/telegram/src/main/jniLibs/<abi>/
+java/org/drinkless/...   ->  data/telegram/src/main/java/org/drinkless/
+```
+
+Обе папки в `.gitignore`: это результат сборки, а не исходники. `TdlibNative.load()`
+возвращает `Missing`, пока библиотеки нет, и `Ready` после того, как она появится.
+
 ### Что дальше
 
-1. Прогнать этот workflow и убедиться, что артефакт собирается.
-2. Модуль `:data:telegram`, куда кладутся `.so` и `TdApi.java`, ABI split в `:app`.
+1. Прогнать workflow и убедиться, что артефакт собирается.
+2. Разложить содержимое по путям выше, ABI split в `:app`.
 3. `api_id`/`api_hash` из Secrets репозитория в `BuildConfig`.
 4. Авторизация по номеру с 2FA, мультиаккаунт (TDLib держит сессии в разных каталогах).
 5. Лента каналов и отметка прочтения через `openChat` / `viewMessages` / `closeChat`.

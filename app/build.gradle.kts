@@ -14,8 +14,8 @@ android {
         applicationId = "io.github.zalexanninev15.tokitoki"
         minSdk = 26
         targetSdk = 35
-        versionCode = 4
-        versionName = "0.4-alpha"
+        versionCode = 5
+        versionName = "0.5-alpha"
 
         // Consumed by the OAuth/MiAuth redirect intent filters in the manifest.
         manifestPlaceholders["authScheme"] = "tokitoki"
@@ -65,6 +65,7 @@ dependencies {
     implementation(project(":domain"))
     implementation(project(":data:mastodon"))
     implementation(project(":data:misskey"))
+    implementation(project(":data:telegram"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.splashscreen)
